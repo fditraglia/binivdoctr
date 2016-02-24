@@ -47,12 +47,13 @@ rm(rescale)
 # Create binary version of instrument
 dinkelman$steep <- (dinkelman$mean_grad_new > 1) # use 1 as cutoff ~= median and FAO's def of strongly sloping
 
-devtools::use_data(dinkelman)
+devtools::use_data(dinkelman, overwrite = TRUE)
 rm(dinkelman)
 
 
 # ======================================================================
 # Angrist et al (2002, AER) - Vouchers for Private Schooling
+# Data needed to replicate selected results from Table 7
 # ======================================================================
 download.file("http://economics.mit.edu/files/1395", "./data-raw/tab7.sas7bdat")
 angrist <- haven::read_sas("./data-raw/tab7.sas7bdat")
@@ -87,41 +88,85 @@ totalRepeats <- apply(rept, 1, f)
 angrist$totalRepeats <- totalRepeats
 rm(totalRepeats, f, rept)
 
-keep <- c(# Covariates
-          "age",
-          "svy",
-          # Dummies
-          "strata1",
-          "strata2",
-          "strata3",
-          "strata4",
-          "dmonth1",
-          "dmonth2",
-          "dmonth3",
-          "dmonth4",
-          "dmonth5",
-          "dmonth6",
-          "dmonth7",
-          "dmonth8",
-          "dmonth9",
-          "dmonth10",
-          "dmonth11",
-          "dmonth12",
-          # Regressor
-          "usesch",
-          # Instrument
-          "vouch0",
-          # Outcomes
-          "highestGrade",
-          "totalRepeats",
-          # Region Indicators
-          "jam93smp", # Jamundi
-          "bog95smp") # Bogota
+# In their SAS file, Angrist et al restrict their sample using the following
+# condition, on which they do not comment in either the paper or the code.
+# It is not innocuous, since it rules out individuals for whom we are not in
+# fact missing the variables needed to carry out some of the regressions in
+# Table 7. Moreover, some of these variables on which they exclude do not even
+# appear to be used in the paper. Nevertheless, we will restrict our sample as
+# they do so that our results are comparable.
+keepObs <- with(angrist, !is.na(scyfnsh) & !is.na(finish6) & !is.na(rept6) &
+                  !is.na(totalRepeats) & !is.na(svy) &
+                  !is.na(inschl) & !is.na(finish7) &
+                  !is.na(vouch0) & !is.na(prsch_c) &
+                  !is.na(finish8) & !is.na(prscha_2) &
+                  !is.na(totscyrs) & !is.na(rept) &
+                  ((bog95smp == 1) | (bog97smp == 1) | (jam93smp == 1)))
 
-angrist <- angrist[, keep]
-rm(keep)
+angrist <- angrist[keepObs,]
+rm(keepObs)
 
-devtools::use_data(angrist)
+# Note that we do not include some of the Dummies mentioned by Angrist et al.
+# This is because they are collinear and are automatically dropped when running
+# OLS or IV. The ones that we excluded are:
+#   strata6
+#   stratams
+#   dbogota
+#   d1993
+#   d1997
+#   dmonth12
+# We chose these since they are the ones that are automatically exluded by R's
+# lm function when it runs the OLS, reduced form, and first stage regressions.
+
+keepVars <- c(
+# Covariates
+  "age", # The only covariate that isn't a dummy
+  "svy",
+  "hsvisit",
+  "djamundi",
+  "phone",
+  "sex2",
+  "d1995",
+  "strata1",
+  "strata2",
+  "strata3",
+  "strata4",
+  "strata5",
+  "dmonth1",
+  "dmonth2",
+  "dmonth3",
+  "dmonth4",
+  "dmonth5",
+  "dmonth6",
+  "dmonth7",
+  "dmonth8",
+  "dmonth9",
+  "dmonth10",
+  "dmonth11",
+  # Regressor
+  "usesch",
+  # Instrument
+  "vouch0",
+  # Outcomes
+  "highestGrade",
+  "totalRepeats",
+  # Indicators of different sample-city years
+  "bog95smp", # Bogota 1995
+  "bog97smp", # Bogota 1997
+  "jam93smp" # Jamundi 1993
+)
+
+angrist <- angrist[, keepVars]
+rm(keepVars)
+
+# Note: there is one individual in the dataset whose sex is unknown. Although
+# Angrist et al do not make this clear, the rule they use to exclude
+# observations in their SAS file already drops this individual. Thus, although
+# they include a dummy for sex being missing (sex_miss) in their regressions,
+# this is just being dropped by SAS since it's the same for everyone.
+# Accordingly, we don't bother to store it.
+
+devtools::use_data(angrist, overwrite = TRUE)
 rm(angrist)
 
 # ======================================================================
@@ -163,7 +208,7 @@ keep <- c(
 gelbach <- gelbach[keep]
 rm(keep)
 
-devtools::use_data(gelbach)
+devtools::use_data(gelbach, overwrite = TRUE)
 rm(gelbach)
 
 
