@@ -11,10 +11,10 @@ LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.3),
     AER
-LinkingTo:
-    Rcpp,
+LinkingTo: Rcpp,
     RcppArmadillo
 Suggests:
     haven,
     AER,
     ivpack
+RoxygenNote: 5.0.1
