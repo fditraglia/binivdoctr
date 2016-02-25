@@ -123,6 +123,8 @@ get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
 
 
 get_m11_bounds <- function(a0, a1, obs){
+  D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
+              ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
   m00 <- with(obs, ((1 - a1) * yt00 - a1 * yt10) / (1 - p0 - a1))
   m01 <- with(obs, ((1 - a1) * yt01 - a1 * yt11) / (1 - p1 - a1))
   ybStar10 <- with(obs, ((1 - a0) * yt10 - a0 * yt00) / (p0 - a0))
@@ -168,14 +170,15 @@ get_m11_bounds <- function(a0, a1, obs){
   }
   roots <- list(m10 = roots_m10, m11 = roots_m11)
 
+
   if(all(is.na(unlist(roots)))){
     return(list(NA))
   }else if(all(is.na(roots$m10)) & all(!is.na(roots$m11))){
     return(list(roots$m11))
   }else if(all(!is.na(roots$m10)) & all(is.na(roots$m11))){
-    return(list(roots$m10 - D(a0)))
+    return(list(roots$m10 - D))
   }else{
-    set1 <- roots$m10 - D(a0)
+    set1 <- roots$m10 - D
     set2 <- roots$m11
     if(min(set1) <= min(set2)){
       L <- set1
