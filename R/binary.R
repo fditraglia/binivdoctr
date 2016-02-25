@@ -76,3 +76,124 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
 }
 
 
+get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
+
+  h1 <- with(obs, (1 - q) * yt00 + q * yt01)
+  h2 <- with(obs, (1 - q) * yt10 + q * yt11)
+  h <- with(obs, (h1 - a1 * (h1 + h2)) / (1 - p - a1))
+
+  g <- with(obs, (yt01 - yt00) - a1 * ((yt01 - yt00) + (yt11 - yt10)))
+  D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
+              ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
+
+  K_first <- g / (p0 - p1)
+  K_second <- ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1))
+  K <- K_first - K_second - h
+
+  F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
+  F2 <- with(obs, q * (1 - q) * F1)
+  S <- with(obs, (1 - a0 - a1) / (p0 - p1))
+
+  return(with(obs, K - F1 - S * N1 + (F2 + S * (N2 - 1)) * dz_tilde))
+}
+
+get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
+
+  h1 <- with(obs, (1 - q) * yt00 + q * yt01)
+  h2 <- with(obs, (1 - q) * yt10 + q * yt11)
+  h <- with(obs, (h1 - a1 * (h1 + h2)) / (1 - p - a1))
+
+  g <- with(obs, (yt01 - yt00) - a1 * ((yt01 - yt00) + (yt11 - yt10)))
+  D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
+              ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
+
+  K_first <- g / (p0 - p1)
+  K_second <- ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1))
+  K <- K_first - K_second - h
+
+  F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
+  F2 <- with(obs, q * (1 - q) * F1)
+  S <- with(obs, (1 - a0 - a1) / (p0 - p1))
+
+  denom <- (F2 + S * (N2 - 1))
+  return(with(obs, (F1 + S * N1 - K) / (denom) + (1 / (denom)) * dTstar_tilde))
+}
+
+
+
+
+get_m11_bounds <- function(a0, a1, obs){
+  m00 <- with(obs, ((1 - a1) * yt00 - a1 * yt10) / (1 - p0 - a1))
+  m01 <- with(obs, ((1 - a1) * yt01 - a1 * yt11) / (1 - p1 - a1))
+  ybStar10 <- with(obs, ((1 - a0) * yt10 - a0 * yt00) / (p0 - a0))
+  ybStar11 <- with(obs, ((1 - a0) * yt11 - a0 * yt01) / (p1 - a0))
+  V00 <- with(obs, a1 * (1 - a0) * (p0 - a0) * (1 - p0 - a1) /
+    ((1 - p0)^2 * (1 - a0 - a1)^2))
+  V10 <- with(obs, a1 * (1 - a0) * (p1 - a0) * (1 - p1 - a1) /
+    ((1 - p1)^2 * (1 - a0 - a1)^2))
+  V01 <- with(obs, a0 * (1 - a1) * (p0 - a0) * (1 - p0 - a1) /
+    (p0^2 * (1 - a0 - a1)^2))
+  V11 <- with(obs, a0 * (1 - a1) * (p1 - a0) * (1 - p1 - a1) /
+    (p1^2 * (1 - a0 - a1)^2))
+
+  # Restrictions for m10
+  c00 <- -1 * (ybStar10(a0) * (ybStar10(a0) - 2 * m00(a1)) -
+    s2_00 / V00(a0, a1))
+  c10 <- -1 * (ybStar10(a0) * (ybStar10(a0) - 2 * m00(a1)) -
+    s2_10 / V10(a0, a1))
+  # Since these are the same quadratic up to a vertical shift only need
+  # to look at the one with a *smaller* intercept
+  c0 <- min(c00, c10)
+  b0 <- -2 * m00(a1)
+  disc0 <- b0^2 - 4 * 1 * c0
+  if(disc0 > 0){
+    roots_m10 <- sort(0.5 * (-b0 + c(-1, 1) * sqrt(disc0)))
+  }else{
+    roots_m10 <- c(NA, NA)
+  }
+  # Restrictions for m11
+  c01 <- -1 * (ybStar11(a0) * (ybStar11(a0) - 2 * m01(a1)) -
+    s2_01 / V01(a0, a1))
+  c11 <- -1 * (ybStar11(a0) * (ybStar11(a0) - 2 * m01(a1)) -
+    s2_11 / V11(a0, a1))
+  # Since these are the same quadratic up to a vertical shift only need
+  # to look at the one with a *smaller* intercept
+  c1 <- min(c01, c11)
+  b1 <- -2 * m00(a1)
+  disc1 <- b1^2 - 4 * 1 * c1
+  if(disc1 > 0){
+    roots_m11 <- sort(0.5 * (-b1 + c(-1, 1) * sqrt(disc1)))
+  }else{
+    roots_m11 <- c(NA, NA)
+  }
+  roots <- list(m10 = roots_m10, m11 = roots_m11)
+
+  if(all(is.na(unlist(roots)))){
+    return(list(NA))
+  }else if(all(is.na(roots$m10)) & all(!is.na(roots$m11))){
+    return(list(roots$m11))
+  }else if(all(!is.na(roots$m10)) & all(is.na(roots$m11))){
+    return(list(roots$m10 - D(a0)))
+  }else{
+    set1 <- roots$m10 - D(a0)
+    set2 <- roots$m11
+    if(min(set1) <= min(set2)){
+      L <- set1
+      O <- set2
+    }else{
+      O <- set1
+      L <- set2
+    }
+    if(min(L) <= min(O) & max(L) >= max(O)){
+     return(list(L))
+    }else if(min(L) <= min(O) & max(L) <= max(O) & min(O) <= max(L)){
+      return(list(c(min(L), max(O))))
+    }else{
+      return(list(L, O))
+    }
+  }
+}
+
+
+
+
