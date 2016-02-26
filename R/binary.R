@@ -32,6 +32,7 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
   z <- get(z_name, data)
 
   obs <- list()
+  obs$n <- length(Tobs)
   obs$p <- mean(Tobs)
   obs$q <- mean(z)
   obs$p0 <- mean(Tobs[z == 0])
@@ -83,7 +84,8 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
 #' @param a1 Probability of observing T = 0 when true treatment status is 0.
 #' @param obs List of obvservables calculated using get Obs.
 #'
-#' @return Endogneity of binary regressor implied by specified values of instrument invalidity and mis-classification probabilities.
+#' @return Endogneity of binary regressor implied by specified values of
+#' instrument invalidity and mis-classification probabilities.
 #' @export
 #'
 get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
@@ -100,11 +102,11 @@ get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
   K_second <- ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1))
   K <- K_first - K_second - h
 
-  F1 <- with(obs, N3 * (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
-  F2 <- with(obs, N4 * q * (1 - q) * F1)
+  F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
+  F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n - 1
   S <- with(obs, (1 - a0 - a1) / (p0 - p1))
 
-  return(with(obs, K - F1 - S * N1 + (F2 + S * (N2 - 1)) * dz_tilde))
+  return(with(obs, K - F1 * N3 - S * N1 + (F2 * N4 + S * (N2 - 1)) * dz_tilde))
 }
 
 #' Calculate endogeneity of binary instrument
@@ -131,12 +133,13 @@ get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
   K_second <- ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1))
   K <- K_first - K_second - h
 
-  F1 <- with(obs, N3 * (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
-  F2 <- with(obs, N4 * q * (1 - q) * F1)
+  F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
+  F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n - 1
   S <- with(obs, (1 - a0 - a1) / (p0 - p1))
 
-  denom <- with(obs, (F2 + S * (N2 - 1)))
-  return(with(obs, (F1 + S * N1 - K) / (denom) + (1 / (denom)) * dTstar_tilde))
+  denom <- with(obs, (F2 * N4 + S * (N2 - 1)))
+  return(with(obs, (F1 * N3 + S * N1 - K) / (denom) + (1 / (denom)) *
+                dTstar_tilde))
 }
 
 
