@@ -116,7 +116,7 @@ get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
 #' @param a1 Probability of observing T = 0 when true treatment status is 1.
 #' @param obs List of observables calculated by \code{getObs}.
 #'
-#' @return Value of regressor endogeneity implied by the data and specified values of regressor endogeneity and mis-classification probabilities.
+#' @return Value of instrument endogeneity implied by the data and specified values of regressor endogeneity and mis-classification probabilities.
 #' @export
 #'
 get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
@@ -233,5 +233,73 @@ get_m11_bounds <- function(a0, a1, obs){
 }
 
 
+#' If constraint is satisfied, calculate endogneity of binary regressor
+#'
+#' @param dz_tilde Endogeneity of binary instrument.
+#' @param a0 Probability of observing T = 1 when true treatment status is 0.
+#' @param a1 Probability of observing T = 0 when true treatment status is 1.
+#' @param obs List of observables calculated by \code{getObs}.
+#'
+#' @return If the variance constraint is satistfied, return the value of regressor endogeneity implied by the data and specified values of instrument endogeneity and mis-classification probabilities. Otherwise return \code{NA}.
+#' @export
+#'
+#' @examples
+get_dTstar_tilde_check <- function(dz_tilde, a0, a1, obs){
+  m11_bounds <- get_m11_bounds(a0, a1, obs)
+  if(all(is.na(unlist(m11_bounds)))){ # No bounds
+    return(get_dTstar_tilde(dz_tilde, a0, a1, obs))
+  }else{ # Bounds
+    g <- with(obs, (yt01 - yt00) - a1 * ((yt01 - yt00) + (yt11 - yt10)))
+    D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
+                ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
+    dz <- with(obs, N1 - (N2 - 1) * dz_tilde)
+    m11 <- with(obs, (g - (1 - a0 - a1) * dz - (p0 - a0) * D) / (p0 - p1))
+    constraint_fails <- sapply(m11_bounds, function(x)
+      (m11 >= x[1] & m11 <= x[2]))
+    if(any(constraint_fails)){
+      return(NA)
+    }else{
+      return(get_dTstar_tilde(dz_tilde, a0, a1, obs))
+    }
+  }
+}
+
+
+#' If constraint is satisfied, calculate endogneity of binary instrument
+#'
+#' @param dTstar_tilde Endogeneity of binary regressor.
+#' @param a0 Probability of observing T = 1 when true treatment status is 0.
+#' @param a1 Probability of observing T = 0 when true treatment status is 1.
+#' @param obs List of observables calculated by \code{getObs}.
+#'
+#' @return If the variance constraint is satistfied, return the value of instrument endogeneity implied by the data and specified values of instrument endogeneity and mis-classification probabilities. Otherwise return \code{NA}.
+#' @export
+#'
+#' @examples
+get_dz_tilde_check <- function(dTstar_tilde, a0, a1, obs){
+  m11_bounds <- get_m11_bounds(a0, a1, obs)
+  if(all(is.na(unlist(m11_bounds)))){ # No bounds
+    return(get_dz_tilde(dTstar_tilde, a0, a1, obs))
+  }else{ # Bounds
+    h1 <- with(obs, (1 - q) * yt00 + q * yt01)
+    h2 <- with(obs, (1 - q) * yt10 + q * yt11)
+    h <- with(obs, (h1 - a1 * (h1 + h2)) / (1 - p - a1))
+    D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
+                ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
+    F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
+    F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n-1
+    dTstar <- dTstar_tilde + F1 * N3 -
+      F2 * N4 * get_dz_tilde(dTstar_tilde, a0, a1, obs)
+    m11 <- ((p - a0) * (dTstar + h) - (1 - q) * (p0 - a0) * D) /
+      ((1 - q) * (p0 - a0) + q * (p1 - a0))
+    constraint_fails <- sapply(m11_bounds, function(x)
+      (m11 >= x[1] & m11 <= x[2]))
+    if(any(constraint_fails)){
+      return(NA)
+    }else{
+      return(get_dz_tilde(dTstar_tilde, a0, a1, obs))
+    }
+  }
+}
 
 
