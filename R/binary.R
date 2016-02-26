@@ -76,6 +76,16 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
 }
 
 
+#' Calculate endogeneity of binary regressor
+#'
+#' @param dz_tilde Endogeneity of binary instrument.
+#' @param a0 Probability of observing T = 1 when true treatment status is 0.
+#' @param a1 Probability of observing T = 0 when true treatment status is 0.
+#' @param obs List of obvservables calculated using get Obs.
+#'
+#' @return Endogneity of binary regressor implied by specified values of instrument invalidity and mis-classification probabilities.
+#' @export
+#'
 get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
 
   h1 <- with(obs, (1 - q) * yt00 + q * yt01)
@@ -90,13 +100,23 @@ get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
   K_second <- ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1))
   K <- K_first - K_second - h
 
-  F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
-  F2 <- with(obs, q * (1 - q) * F1)
+  F1 <- with(obs, N3 * (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
+  F2 <- with(obs, N4 * q * (1 - q) * F1)
   S <- with(obs, (1 - a0 - a1) / (p0 - p1))
 
   return(with(obs, K - F1 - S * N1 + (F2 + S * (N2 - 1)) * dz_tilde))
 }
 
+#' Calculate endogeneity of binary instrument
+#'
+#' @param dTstar_tilde Endogeneity of binary regressor.
+#' @param a0 Probability of observing T = 1 when true treatment status is 0.
+#' @param a1 Probability of observing T = 0 when true treatment status is 1.
+#' @param obs List of observables calculated by \code{getObs}.
+#'
+#' @return Value of regressor endogeneity implied by the data and specified values of regressor endogeneity and mis-classification probabilities.
+#' @export
+#'
 get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
 
   h1 <- with(obs, (1 - q) * yt00 + q * yt01)
@@ -111,17 +131,27 @@ get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
   K_second <- ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1))
   K <- K_first - K_second - h
 
-  F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
-  F2 <- with(obs, q * (1 - q) * F1)
+  F1 <- with(obs, N3 * (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
+  F2 <- with(obs, N4 * q * (1 - q) * F1)
   S <- with(obs, (1 - a0 - a1) / (p0 - p1))
 
-  denom <- (F2 + S * (N2 - 1))
+  denom <- with(obs, (F2 + S * (N2 - 1)))
   return(with(obs, (F1 + S * N1 - K) / (denom) + (1 / (denom)) * dTstar_tilde))
 }
 
 
-
-
+#' Bounds on m11 from variance conditions
+#'
+#' @param a0 Probability of observing T = 1 when true treatment status is 0.
+#' @param a1 Probability of observing T = 0 when true treatment status is 1.
+#' @param obs List of observables calculated using \code{getObs}.
+#'
+#' @return A list of bounds for m11 or NA if there are no bounds.
+#' @export
+#'
+#' @examples
+#' noCov <- getObs("totalRepeats", "usesch", "vouch0", data = angrist)
+#' get_m11_bounds(0.2, 0.4, noCov)
 get_m11_bounds <- function(a0, a1, obs){
   D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
               ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
@@ -139,14 +169,12 @@ get_m11_bounds <- function(a0, a1, obs){
     (p1^2 * (1 - a0 - a1)^2))
 
   # Restrictions for m10
-  c00 <- -1 * (ybStar10(a0) * (ybStar10(a0) - 2 * m00(a1)) -
-    s2_00 / V00(a0, a1))
-  c10 <- -1 * (ybStar10(a0) * (ybStar10(a0) - 2 * m00(a1)) -
-    s2_10 / V10(a0, a1))
+  c00 <- with(obs, -1 * (ybStar10 * (ybStar10 - 2 * m00) - s2_00 / V00))
+  c10 <- with(obs, -1 * (ybStar10 * (ybStar10 - 2 * m00) - s2_10 / V10))
   # Since these are the same quadratic up to a vertical shift only need
   # to look at the one with a *smaller* intercept
   c0 <- min(c00, c10)
-  b0 <- -2 * m00(a1)
+  b0 <- -2 * m00
   disc0 <- b0^2 - 4 * 1 * c0
   if(disc0 > 0){
     roots_m10 <- sort(0.5 * (-b0 + c(-1, 1) * sqrt(disc0)))
@@ -154,14 +182,12 @@ get_m11_bounds <- function(a0, a1, obs){
     roots_m10 <- c(NA, NA)
   }
   # Restrictions for m11
-  c01 <- -1 * (ybStar11(a0) * (ybStar11(a0) - 2 * m01(a1)) -
-    s2_01 / V01(a0, a1))
-  c11 <- -1 * (ybStar11(a0) * (ybStar11(a0) - 2 * m01(a1)) -
-    s2_11 / V11(a0, a1))
+  c01 <- with(obs, -1 * (ybStar11 * (ybStar11 - 2 * m01) - s2_01 / V01))
+  c11 <- with(obs, -1 * (ybStar11 * (ybStar11 - 2 * m01) - s2_11 / V11))
   # Since these are the same quadratic up to a vertical shift only need
   # to look at the one with a *smaller* intercept
   c1 <- min(c01, c11)
-  b1 <- -2 * m00(a1)
+  b1 <- -2 * m00
   disc1 <- b1^2 - 4 * 1 * c1
   if(disc1 > 0){
     roots_m11 <- sort(0.5 * (-b1 + c(-1, 1) * sqrt(disc1)))
@@ -169,17 +195,20 @@ get_m11_bounds <- function(a0, a1, obs){
     roots_m11 <- c(NA, NA)
   }
   roots <- list(m10 = roots_m10, m11 = roots_m11)
-
-
+  # Case I: no bounds from var conditions.
   if(all(is.na(unlist(roots)))){
     return(list(NA))
+  # Case II: bounds for m11 only from var conditions.
   }else if(all(is.na(roots$m10)) & all(!is.na(roots$m11))){
     return(list(roots$m11))
+  # Case II: bounds for m10 only from var conditions
   }else if(all(!is.na(roots$m10)) & all(is.na(roots$m11))){
-    return(list(roots$m10 - D))
+    return(list(roots$m10 - D)) # Implied bound for m11
+  # Case IV: bounds for both m10 and m11 from var conditions
   }else{
-    set1 <- roots$m10 - D
+    set1 <- roots$m10 - D # Implied bound for m11
     set2 <- roots$m11
+    # Call set with smallest lower bound L (for lower) and the other O
     if(min(set1) <= min(set2)){
       L <- set1
       O <- set2
@@ -187,10 +216,13 @@ get_m11_bounds <- function(a0, a1, obs){
       O <- set1
       L <- set2
     }
+    # Case (a): O is a subset of L
     if(min(L) <= min(O) & max(L) >= max(O)){
      return(list(L))
+    # Case (b): O is not a subset of L but O and L overlap
     }else if(min(L) <= min(O) & max(L) <= max(O) & min(O) <= max(L)){
       return(list(c(min(L), max(O))))
+    # Case (c): O and L are disjoint
     }else{
       return(list(L, O))
     }
