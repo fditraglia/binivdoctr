@@ -2,5 +2,7 @@
 
 export(getObs)
 export(get_dTstar_tilde)
+export(get_dTstar_tilde_check)
 export(get_dz_tilde)
+export(get_dz_tilde_check)
 export(get_m11_bounds)

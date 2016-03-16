@@ -98,8 +98,8 @@ get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
   D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
               ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
 
-  K_first <- g / (p0 - p1)
-  K_second <- ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1))
+  K_first <- with(obs, g / (p0 - p1))
+  K_second <- with(obs, ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1)))
   K <- K_first - K_second - h
 
   F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
@@ -129,8 +129,8 @@ get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
   D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
               ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
 
-  K_first <- g / (p0 - p1)
-  K_second <- ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1))
+  K_first <- with(obs, g / (p0 - p1))
+  K_second <- with(obs, ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1)))
   K <- K_first - K_second - h
 
   F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
@@ -244,6 +244,17 @@ get_m11_bounds <- function(a0, a1, obs){
 #' @export
 #'
 #' @examples
+#' AngristControls <- c("age", "svy", "sex2", "phone", "hsvisit",
+#'                      "d1995", "djamundi", "dmonth1", "dmonth2",
+#'                      "dmonth3", "dmonth4", "dmonth5", "dmonth6", "dmonth7",
+#'                      "dmonth8", "dmonth9", "dmonth10", "dmonth11",
+#'                      "strata1", "strata2", "strata3", "strata4", "strata5")
+#' AngristY <- "totalRepeats"
+#' AngristT <- "usesch"
+#' AngristZ <- "vouch0"
+#' AngristObs <- getObs(AngristY, AngristT, AngristZ, AngristControls, angrist)
+#' get_dTstar_tilde_check(0, 0.05, 0.05, AngristObs)
+#' get_dTstar_tilde_check(0, 0.3, 0.4, AngristObs)
 get_dTstar_tilde_check <- function(dz_tilde, a0, a1, obs){
   m11_bounds <- get_m11_bounds(a0, a1, obs)
   if(all(is.na(unlist(m11_bounds)))){ # No bounds
@@ -274,8 +285,18 @@ get_dTstar_tilde_check <- function(dz_tilde, a0, a1, obs){
 #'
 #' @return If the variance constraint is satistfied, return the value of instrument endogeneity implied by the data and specified values of instrument endogeneity and mis-classification probabilities. Otherwise return \code{NA}.
 #' @export
-#'
 #' @examples
+#' AngristControls <- c("age", "svy", "sex2", "phone", "hsvisit",
+#'                      "d1995", "djamundi", "dmonth1", "dmonth2",
+#'                      "dmonth3", "dmonth4", "dmonth5", "dmonth6", "dmonth7",
+#'                      "dmonth8", "dmonth9", "dmonth10", "dmonth11",
+#'                      "strata1", "strata2", "strata3", "strata4", "strata5")
+#' AngristY <- "totalRepeats"
+#' AngristT <- "usesch"
+#' AngristZ <- "vouch0"
+#' AngristObs <- getObs(AngristY, AngristT, AngristZ, AngristControls, angrist)
+#' get_dz_tilde_check(-0.2, 0.1, 0.1, AngristObs)
+#' get_dz_tilde_check(-0.1, 0.1, 0.2, AngristObs)
 get_dz_tilde_check <- function(dTstar_tilde, a0, a1, obs){
   m11_bounds <- get_m11_bounds(a0, a1, obs)
   if(all(is.na(unlist(m11_bounds)))){ # No bounds
@@ -288,10 +309,10 @@ get_dz_tilde_check <- function(dTstar_tilde, a0, a1, obs){
                 ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
     F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
     F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n-1
-    dTstar <- dTstar_tilde + F1 * N3 -
-      F2 * N4 * get_dz_tilde(dTstar_tilde, a0, a1, obs)
-    m11 <- ((p - a0) * (dTstar + h) - (1 - q) * (p0 - a0) * D) /
-      ((1 - q) * (p0 - a0) + q * (p1 - a0))
+    dTstar <- with(obs, dTstar_tilde + F1 * N3 -
+      F2 * N4 * get_dz_tilde(dTstar_tilde, a0, a1, obs))
+    m11 <- with(obs, ((p - a0) * (dTstar + h) - (1 - q) * (p0 - a0) * D) /
+      ((1 - q) * (p0 - a0) + q * (p1 - a0)))
     constraint_fails <- sapply(m11_bounds, function(x)
       (m11 >= x[1] & m11 <= x[2]))
     if(any(constraint_fails)){

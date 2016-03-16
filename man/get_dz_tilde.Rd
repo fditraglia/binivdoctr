@@ -16,7 +16,7 @@ get_dz_tilde(dTstar_tilde, a0, a1, obs)
 \item{obs}{List of observables calculated by \code{getObs}.}
 }
 \value{
-Value of regressor endogeneity implied by the data and specified values of regressor endogeneity and mis-classification probabilities.
+Value of instrument endogeneity implied by the data and specified values of regressor endogeneity and mis-classification probabilities.
 }
 \description{
 Calculate endogeneity of binary instrument

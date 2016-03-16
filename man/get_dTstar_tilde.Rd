@@ -16,7 +16,8 @@ get_dTstar_tilde(dz_tilde, a0, a1, obs)
 \item{obs}{List of obvservables calculated using get Obs.}
 }
 \value{
-Endogneity of binary regressor implied by specified values of instrument invalidity and mis-classification probabilities.
+Endogneity of binary regressor implied by specified values of
+instrument invalidity and mis-classification probabilities.
 }
 \description{
 Calculate endogeneity of binary regressor
