@@ -98,7 +98,7 @@ dirichletPlot <- function(scale, inc = 0.005){
 
 dirichletInteractive <- function(){
   manipulate::manipulate(dirichletPlot(c(s1, s2, s3)),
-             s1 = slider(1, 5, 1, step = 0.25),
-             s2 = slider(1, 5, 1, step = 0.25),
-             s3 = slider(1, 5, 2, step = 0.25))
+             s1 = slider(1, 10, 1, step = 0.25),
+             s2 = slider(1, 10, 1, step = 0.25),
+             s3 = slider(1, 10, 2, step = 0.25))
 }
