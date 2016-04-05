@@ -63,7 +63,7 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
     Sigma <- rbind(cbind(cov(z, Tobs), cov(z, x)),
                        cbind(cov(x, Tobs), cov(x)))
     Sigma_inv <- solve(Sigma)
-    obs$s_zT_upper <- Sigma_inv[1,1]
+    obs$s_zT_upper <- Sigma_inv[1,1] # need this to back out implied beta
     s_xT_upper <- matrix(Sigma_inv[-1,1], ncol(x), 1)
     obs$N1 <- drop(cov(z, x) %*% gamma_iv / var(z))
     obs$N2 <- drop(cov(z, x) %*% s_xT_upper)
