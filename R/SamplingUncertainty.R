@@ -157,6 +157,34 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 }
 
 
+draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
+                          dTstar_tilde_range,
+                          drawAlphas = function() rdirichlet(1, c(1, 1, 5)),
+                          nRF = 10, nIS = 1, maxIter = nIS * 100){
+
+  RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
+  for(i in 1:nrow(RFdraws)){
+    obs <- as.list(RFdraws[i,])
+
+    drawCounter <- IScounter <- 0
+
+    while(IScounter < nIS){
+
+      dTstar_tilde <- runif(1, dTstar_tilde_range[1], dTstar_tilde_range[2])
+      alphas <- drawAlphas()
+      a0 <- alphas[1]
+      a1 <- alphas[2]
+      dz_tilde <- get_dz_tilde_check(dTstar_tilde, a0, a1, obs)
+
+      drawCounter <- drawCounter + 1
+      if(!is.na(dz_tilde))
+
+    }
+
+  }
+}
+
+
 
 
 
