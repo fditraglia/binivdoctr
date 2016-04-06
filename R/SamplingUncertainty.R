@@ -160,28 +160,40 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
                           dTstar_tilde_range,
                           drawAlphas = function() rdirichlet(1, c(1, 1, 5)),
-                          nRF = 10, nIS = 1, maxIter = nIS * 100){
+                          nRF = 10, nIS = 5, maxIter = nIS * 20){
 
   RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
+  emptySlice <- matrix(NA_real_, nIS, 4)
+  emptySlice <- data.frame(emptySlice)
+  names(emptySlice) <- c("a0", "a1", "dTstar_tilde", "dz_tilde")
+  ISdraws <- vector("list", nRF)
+
   for(i in 1:nrow(RFdraws)){
     obs <- as.list(RFdraws[i,])
 
-    drawCounter <- IScounter <- 0
+    successCount <- tryCount <- 0
+    tempSlice <- emptySlice
 
-    while(IScounter < nIS){
+    while((tryCount < maxIter) & (successCount < nIS)){
 
       dTstar_tilde <- runif(1, dTstar_tilde_range[1], dTstar_tilde_range[2])
       alphas <- drawAlphas()
       a0 <- alphas[1]
       a1 <- alphas[2]
       dz_tilde <- get_dz_tilde_check(dTstar_tilde, a0, a1, obs)
+      tryCount <- tryCount + 1
 
-      drawCounter <- drawCounter + 1
-      if(!is.na(dz_tilde))
-
+      if(!is.na(dz_tilde)){
+        successCount <- successCount + 1
+        tempSlice$a0[successCount] <- a0
+        tempSlice$a1[successCount] <- a1
+        tempSlice$dTstar_tilde[successCount] <- dTstar_tilde
+        tempSlice$dz_tilde[successCount] <- dz_tilde
+      }
     }
-
+    ISdraws[[i]] <- tempSlice
   }
+  return(list(IS = ISdraws, RF = RFdraws))
 }
 
 
