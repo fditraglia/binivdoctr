@@ -41,7 +41,8 @@ getMomentsForSampler <- function(y_name, T_name, z_name, controls = NULL, data){
     second_stage <- reformulate(c(T_name, controls), response = y_name)
     first_stage <- reformulate(c(z_name, controls))
     bReg <- AER::ivreg(second_stage, first_stage, data)
-    gamma_iv <- coefficients(bReg)[-c(1,2)]
+    b_iv <- coefficients(bReg)[-1] # Don't need the constant
+    names(b_iv)[1] <- "Treatment" # The IV estimate of the treatment effect
     rho <- residuals(bReg)
     R <- model.matrix(first_stage, data)
     W <- model.matrix(second_stage, data)
@@ -55,9 +56,9 @@ getMomentsForSampler <- function(y_name, T_name, z_name, controls = NULL, data){
     H_by <- Sigma_RW_inv %*% Xi_rw %*% t(Q %*% Sigma_AA_inv)
     H <- rbind(cbind(H_bb, H_by),
                cbind(t(H_by), H_yy))
-    S <- H[-c(1,2), -c(1,2)]
+    S <- H[-1, -1]
 
-    out_mean <- c(gamma_iv, ybar)
+    out_mean <- c(b_iv, ybar)
     out_var <- S / n
   }
   return(list(mean = out_mean, var = out_var))
@@ -72,7 +73,8 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
   RFdraws <- MASS::mvrnorm(nDraws, moments$mean, moments$var)
 
   gamma_iv <- RFdraws[,-which(colnames(RFdraws) %in%
-                                c("yb00", "yb01", "yb10", "yb11"))]
+                                c("Treatment", "yb00", "yb01", "yb10", "yb11"))]
+  beta_iv <- RFdraws[,colnames(RFdraws) == "Treatment"]
   yb00 <- RFdraws[,colnames(RFdraws) == "yb00"]
   yb01 <- RFdraws[,colnames(RFdraws) == "yb01"]
   yb10 <- RFdraws[,colnames(RFdraws) == "yb10"]
@@ -152,20 +154,21 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
                          N1 = N1,
                          N2 = rep(N2, nDraws),
                          N3 = N3,
-                         N4 = rep(N4, nDraws))
+                         N4 = rep(N4, nDraws),
+                         beta_iv = beta_iv)
   return(obsDraws)
 }
 
 
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
                           dTstar_tilde_range,
-                          drawAlphas = function() rdirichlet(1, c(1, 1, 5)),
+                          drawAlphas = function() rdirichlet(1, c(1, 1, 7)),
                           nRF = 10, nIS = 5, maxIter = nIS * 20){
 
   RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
-  emptySlice <- matrix(NA_real_, nIS, 4)
+  emptySlice <- matrix(NA_real_, nIS, 5)
   emptySlice <- data.frame(emptySlice)
-  names(emptySlice) <- c("a0", "a1", "dTstar_tilde", "dz_tilde")
+  names(emptySlice) <- c("a0", "a1", "dTstar_tilde", "dz_tilde", "beta")
   ISdraws <- vector("list", nRF)
 
   for(i in 1:nrow(RFdraws)){
@@ -191,6 +194,9 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
         tempSlice$dz_tilde[successCount] <- dz_tilde
       }
     }
+    BBS <- (1 - tempSlice$a0 - tempSlice$a1)
+    s_ze <- obs$q * (1 - obs$q) * tempSlice$dz_tilde
+    tempSlice$beta <- BBS * (obs$beta_iv - s_ze * obs$s_zT_upper)
     ISdraws[[i]] <- tempSlice
   }
   return(list(IS = ISdraws, RF = RFdraws))
