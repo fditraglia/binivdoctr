@@ -94,6 +94,7 @@ dirichletPlot <- function(scale, inc = 0.005){
   image(a0, a1, dens, col = pal(length(mybreaks) - 1), breaks = mybreaks)
   image.scale(dens, col=pal(length(mybreaks)-1), breaks = mybreaks, horiz = FALSE,
               xlab = "", ylab = "")
+  par(mfrow = c(1,1))
 }
 
 dirichletInteractive <- function(){
