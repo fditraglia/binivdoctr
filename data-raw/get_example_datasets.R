@@ -47,6 +47,15 @@ rm(rescale)
 # Create binary version of instrument
 dinkelman$steep <- (dinkelman$mean_grad_new > 1) # use 1 as cutoff ~= median and FAO's def of strongly sloping
 
+# Replace dccode0 (a factor for district) with a group of dummy variables that
+# represent the same information, treating F21 as the "baseline"
+region <- as.factor(dinkelman$dccode0)
+dinkelman$dccode0 <- NULL
+dummies <- model.matrix(~ region)
+dummies <- dummies[,-1]
+dinkelman <- cbind(dinkelman, dummies)
+rm(region, dummies)
+
 devtools::use_data(dinkelman, overwrite = TRUE)
 rm(dinkelman)
 
