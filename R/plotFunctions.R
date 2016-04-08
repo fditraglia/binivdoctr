@@ -1,3 +1,16 @@
+#' Valid IV plot
+#'
+#' @param obs
+#' @param a0_range
+#' @param a1_range
+#' @param theta
+#' @param phi
+#' @param forceZero
+#'
+#' @return
+#' @export
+#'
+#' @examples
 plot_valid_iv <- function(obs, a0_range = seq(0, 0.2, 0.01),
                           a1_range = seq(0, 0.2, 0.01), theta = 0, phi = 15,
                           forceZero = FALSE){
@@ -28,6 +41,20 @@ plot_valid_iv <- function(obs, a0_range = seq(0, 0.2, 0.01),
 
 
 
+#' Fixed dTstar plot
+#'
+#' @param obs
+#' @param dTstar
+#' @param a0_range
+#' @param a1_range
+#' @param theta
+#' @param phi
+#' @param forceZero
+#'
+#' @return
+#' @export
+#'
+#' @examples
 plot_fixed_dTstar <- function(obs, dTstar, a0_range = seq(0, 0.2, 0.01),
                               a1_range = seq(0, 0.2, 0.01), theta = 0,
                               phi = 15, forceZero = TRUE){

@@ -1,3 +1,12 @@
+#' Random draws from a Dirichlet Distribution
+#'
+#' @param n
+#' @param shape
+#'
+#' @return
+#' @export
+#'
+#' @examples
 rdirichlet <- function(n, shape){
   K <- length(shape)
   gamma_draws <- matrix(rgamma(n * K, shape, scale = 1), K)
@@ -5,6 +14,17 @@ rdirichlet <- function(n, shape){
   return(out[-K,])
 }
 
+
+#' Dirichlet Density Function
+#'
+#' @param x
+#' @param shape
+#' @param log.ret
+#'
+#' @return
+#' @export
+#'
+#' @examples
 ddirichlet <- function(x, shape, log.ret = FALSE){
   K <- length(shape)
   stopifnot(is.numeric(x))
@@ -37,6 +57,7 @@ ddirichlet <- function(x, shape, log.ret = FALSE){
   }
 }
 
+# Helper function for making the plot below
 image.scale <- function(z, zlim, col = heat.colors(12),
                         breaks, horiz=TRUE, ylim=NULL, xlim=NULL, ...){
   if(!missing(breaks)){
@@ -72,6 +93,15 @@ image.scale <- function(z, zlim, col = heat.colors(12),
   }
 }
 
+#' Heatmap Plot for Dirichlet Density
+#'
+#' @param scale
+#' @param inc
+#'
+#' @return
+#' @export
+#'
+#' @examples
 dirichletPlot <- function(scale, inc = 0.005){
   stopifnot(length(scale) == 3)
   a0 <- a1 <- seq(0.01, 0.99, inc)
@@ -97,9 +127,15 @@ dirichletPlot <- function(scale, inc = 0.005){
   par(mfrow = c(1,1))
 }
 
+#' Interactive Heatmap for Dirichlet Density
+#'
+#' @return
+#' @export
+#'
+#' @examples
 dirichletInteractive <- function(){
   manipulate::manipulate(dirichletPlot(c(s1, s2, s3)),
-             s1 = slider(1, 10, 1, step = 0.25),
-             s2 = slider(1, 10, 1, step = 0.25),
-             s3 = slider(1, 10, 2, step = 0.25))
+             s1 = manipulate::slider(1, 10, 1, step = 0.25),
+             s2 = manipulate::slider(1, 10, 1, step = 0.25),
+             s3 = manipulate::slider(1, 10, 2, step = 0.25))
 }
