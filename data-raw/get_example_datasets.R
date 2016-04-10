@@ -38,6 +38,9 @@ keep <- c(# Treatment
 dinkelman <- dinkelman[, keep]
 rm(keep)
 
+# Rename "T" to escom so it doesn't clash with "TRUE"
+names(dinkelman)[which(names((dinkelman)) == "T")] <- "escom"
+
 # Rescale certain variables to match magnitudes in paper
 rescale <- c("mean_grad_new", "kms_to_subs0", "baseline_hhdens0",
              "kms_to_road0", "kms_to_town0")
@@ -49,12 +52,12 @@ dinkelman$steep <- (dinkelman$mean_grad_new > 1) # use 1 as cutoff ~= median and
 
 # Replace dccode0 (a factor for district) with a group of dummy variables that
 # represent the same information, treating F21 as the "baseline"
-region <- as.factor(dinkelman$dccode0)
+district <- as.factor(dinkelman$dccode0)
 dinkelman$dccode0 <- NULL
-dummies <- model.matrix(~ region)
+dummies <- model.matrix(~ district)
 dummies <- dummies[,-1]
 dinkelman <- cbind(dinkelman, dummies)
-rm(region, dummies)
+rm(district, dummies)
 
 devtools::use_data(dinkelman, overwrite = TRUE)
 rm(dinkelman)
