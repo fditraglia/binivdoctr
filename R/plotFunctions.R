@@ -13,7 +13,10 @@
 #' @examples
 plot_valid_iv <- function(obs, a0_range = seq(0, 0.2, 0.01),
                           a1_range = seq(0, 0.2, 0.01), theta = 0, phi = 15,
-                          forceZero = FALSE){
+                          forceZero = FALSE, xlab = "a0",
+                          ylab = "a1",
+                          zlab = "dTstar",
+                          col = "dodgerblue2"){
   f <- function(a0, a1){
     get_dTstar_tilde_check(0, a0, a1, obs)
   }
@@ -35,8 +38,8 @@ plot_valid_iv <- function(obs, a0_range = seq(0, 0.2, 0.01),
     }
   }
   persp(a0_range, a1_range, dTstar, phi = phi, theta = theta,
-        zlim = dTstar_range, ticktype = "detailed", xlab = "a0", ylab = "a1",
-        zlab = "dTstar")
+        zlim = dTstar_range, ticktype = "detailed", xlab = xlab,
+        ylab = ylab, zlab = zlab, col = col)
 }
 
 
@@ -57,7 +60,9 @@ plot_valid_iv <- function(obs, a0_range = seq(0, 0.2, 0.01),
 #' @examples
 plot_fixed_dTstar <- function(obs, dTstar, a0_range = seq(0, 0.2, 0.01),
                               a1_range = seq(0, 0.2, 0.01), theta = 0,
-                              phi = 15, forceZero = TRUE){
+                              phi = 15, forceZero = TRUE, xlab = "a0",
+                              ylab = "a1", zlab = "dz",
+                              col = "dodgerblue2"){
   f <- function(a0, a1){
     get_dz_tilde_check(dTstar, a0, a1, obs)
   }
@@ -79,7 +84,8 @@ plot_fixed_dTstar <- function(obs, dTstar, a0_range = seq(0, 0.2, 0.01),
     }
   }
   persp(a0_range, a1_range, dz, phi = phi, theta = theta, zlim = dz_range,
-        ticktype = "detailed", xlab = "a0", ylab = "a1", zlab = "dz")
+        ticktype = "detailed", xlab = xlab, ylab = ylab, zlab = zlab,
+        col = col)
 }
 
 

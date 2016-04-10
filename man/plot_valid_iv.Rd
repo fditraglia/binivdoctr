@@ -5,7 +5,8 @@
 \title{Valid IV plot}
 \usage{
 plot_valid_iv(obs, a0_range = seq(0, 0.2, 0.01), a1_range = seq(0, 0.2,
-  0.01), theta = 0, phi = 15, forceZero = FALSE)
+  0.01), theta = 0, phi = 15, forceZero = FALSE, xlab = "a0",
+  ylab = "a1", zlab = "dTstar", col = "dodgerblue2")
 }
 \arguments{
 \item{forceZero}{}
