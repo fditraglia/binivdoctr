@@ -4,7 +4,7 @@
 \alias{plotAlphaBounds}
 \title{Make plot of bounds on a0 and a1 implied by observable CDFs}
 \usage{
-plotAlphaBounds(inData, inc = 0.01, frac = 0.05)
+plotAlphaBounds(inData, inc = 0.01, j = 10)
 }
 \arguments{
 \item{inData}{Dataframe with columns named Tobs (binary), y, and z (binary)}

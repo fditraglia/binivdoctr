@@ -8,7 +8,7 @@
 #' @export
 #'
 #' @examples
-plotAlphaBounds <- function(inData, inc = 0.01, frac = 0.05){
+plotAlphaBounds <- function(inData, inc = 0.01, j = 10){
   Tobs <- inData$Tobs
   z <- inData$z
   y <- inData$y
@@ -70,59 +70,55 @@ plotAlphaBounds <- function(inData, inc = 0.01, frac = 0.05){
   (1 - F01tilde(tau) - p1) / (1 - F01tilde(tau) - F11tilde(tau))
   }
 
-  tau_range_z0 <- c(max(min(y00), min(y10)), min(max(y00), max(y10)))
-  tau_z0 <- seq(tau_range_z0[1], tau_range_z0[2], inc)
-  tau_range_z1 <- c(max(min(y01), min(y11)), min(max(y01), max(y11)))
-  tau_z1 <- seq(tau_range_z1[1], tau_range_z1[2], inc)
+  tau_B0_z0 <- seq(max(sort(y00)[j], sort(y10)[j]), max(y), inc)
+  tau_B0_z1 <- seq(max(sort(y01)[j], sort(y11)[j]), max(y), inc)
+  tau_B1_z0 <- seq(min(y), min(sort(y00, TRUE)[j], sort(y10, TRUE)[j]), inc)
+  tau_B1_z1 <- seq(min(y), min(sort(y01, TRUE)[j], sort(y11, TRUE)[j]), inc)
 
-  plot_min <- min(tau_z0, tau_z1)
-  plot_max <- max(tau_z0, tau_z1)
+  plot_min <- min(c(tau_B0_z0, tau_B0_z1, tau_B1_z0, tau_B1_z1))
+  plot_max <- max(c(tau_B0_z0, tau_B0_z1, tau_B1_z0, tau_B1_z1))
 
   # Set up side-by-side plot with legend beneath
   op <- par(no.readonly = TRUE)
   par(mfrow = c(1, 2), oma = c(4, 1, 1, 1))
 
   # Make plot for a0
-  a0_B0_z0 <- B0_z0_a0(tau_z0)
-  a0_B1_z0 <- B1_z0_a0(tau_z0)
-  a0_B0_z1 <- B0_z1_a0(tau_z1)
-  a0_B1_z1 <- B1_z1_a0(tau_z1)
+  a0_B0_z0 <- B0_z0_a0(tau_B0_z0)
+  a0_B1_z0 <- B1_z0_a0(tau_B1_z0)
+  a0_B0_z1 <- B0_z1_a0(tau_B0_z1)
+  a0_B1_z1 <- B1_z1_a0(tau_B1_z1)
   a0_min <- min(c(a0_B0_z0, a0_B1_z0, a0_B0_z1, a0_B1_z1))
   a0_max <- max(c(a0_B0_z0, a0_B1_z0, a0_B0_z1, a0_B1_z1))
 
-  plot(tau_z0, a0_B0_z0, type = 'l', xlab = expression(tau),
+  plot(tau_B0_z0, a0_B0_z0, type = 'l', xlab = expression(tau),
        ylab = expression(bar(alpha[0])), lwd = 2, ylim = c(a0_min, a0_max),
        xlim = c(plot_min, plot_max), col = "blue",
        main = substitute(paste(alpha[0], " Upper Bounds")))
-  abline(v = quantile(y, frac), lwd = 2, lty = 2)
-  abline(v = quantile(y, 1 - frac), lwd = 2, lty = 2)
 
-  points(tau_z0, a0_B1_z0, type = 'l', col = "red", lwd = 2)
+  points(tau_B1_z0, a0_B1_z0, type = 'l', col = "red", lwd = 2)
 
-  points(tau_z1, a0_B0_z1, type = 'l', col = "green", lwd = 2)
+  points(tau_B0_z1, a0_B0_z1, type = 'l', col = "green", lwd = 2)
 
-  points(tau_z1, a0_B1_z1, type = 'l', col = "orange", lwd = 2)
+  points(tau_B1_z1, a0_B1_z1, type = 'l', col = "orange", lwd = 2)
 
   # Make plot for a1
-  a1_B0_z0 <- B0_z0_a1(tau_z0)
-  a1_B1_z0 <- B1_z0_a1(tau_z0)
-  a1_B0_z1 <- B0_z1_a1(tau_z1)
-  a1_B1_z1 <- B1_z1_a1(tau_z1)
+  a1_B0_z0 <- B0_z0_a1(tau_B0_z0)
+  a1_B1_z0 <- B1_z0_a1(tau_B1_z0)
+  a1_B0_z1 <- B0_z1_a1(tau_B0_z1)
+  a1_B1_z1 <- B1_z1_a1(tau_B1_z1)
   a1_min <- min(c(a1_B0_z0, a1_B1_z0, a1_B0_z1, a1_B1_z1))
   a1_max <- max(c(a1_B0_z0, a1_B1_z0, a1_B0_z1, a1_B1_z1))
 
-  plot(tau_z0, a1_B0_z0, type = 'l', xlab = expression(tau),
+  plot(tau_B0_z0, a1_B0_z0, type = 'l', xlab = expression(tau),
        ylab = expression(bar(alpha[1])), lwd = 2, ylim = c(a1_min, a1_max),
        xlim = c(plot_min, plot_max), col = "blue",
        main = substitute(paste(alpha[1], " Upper Bounds")))
-  abline(v = quantile(y, frac), lwd = 2, lty = 2)
-  abline(v = quantile(y, 1 - frac), lwd = 2, lty = 2)
 
-  points(tau_z0, a1_B1_z0, type = 'l', col = "red", lwd = 2)
+  points(tau_B1_z0, a1_B1_z0, type = 'l', col = "red", lwd = 2)
 
-  points(tau_z1, a1_B0_z1, type = 'l', col = "green", lwd = 2)
+  points(tau_B0_z1, a1_B0_z1, type = 'l', col = "green", lwd = 2)
 
-  points(tau_z1, a1_B1_z1, type = 'l', col = "orange", lwd = 2)
+  points(tau_B1_z1, a1_B1_z1, type = 'l', col = "orange", lwd = 2)
 
   # Add legend beneath side-by-side plots
   par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
