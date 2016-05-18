@@ -82,8 +82,8 @@ drawDPM <- function(X, nDraws = 5000, burnIn = 1000, maxClust = 50,
     empty <- sapply(clusters, is.null)
 
     # update p
-    V <- rbeta(maxClust - 1, shape1 = 1 + obsPerClust[-maxClust],
-               shape2 = alpha + cumsum(obsPerClust)[-1])
+    V <- c(rbeta(maxClust - 1, shape1 = 1 + obsPerClust[-maxClust],
+               shape2 = alpha + cumsum(obsPerClust)[-1]), 1)
     log_remain <- c(0, cumsum(log(1 - V[-maxClust])))
     p <- exp(log(V) + log_remain)
 
