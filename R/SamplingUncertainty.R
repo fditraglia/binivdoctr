@@ -116,6 +116,8 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
   q <- mean(z)
   p0 <- mean(Tobs[z == 0])
   p1 <- mean(Tobs[z == 1])
+  a0upper <- min(p0, p1)
+  a1upper <- min(1 - p0, 1 - p1)
   p00 <- mean(Tobs == 0 & z == 0)
   p01 <- mean(Tobs == 0 & z == 1)
   p10 <- mean(Tobs == 1 & z == 0)
@@ -160,6 +162,8 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
                          q = rep(q, nDraws),
                          p0 = rep(p0, nDraws),
                          p1 = rep(p1, nDraws),
+                         a0upper = rep(a0upper, nDraws),
+                         a1upper = rep(a1upper, nDraws),
                          p00 = rep(p00, nDraws),
                          p01 = rep(p01, nDraws),
                          p10 = rep(p10, nDraws),
@@ -194,7 +198,7 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #' @param controls
 #' @param data
 #' @param dTstar_tilde_range
-#' @param drawAlphas
+#' @param alphas_upper
 #' @param nRF
 #' @param nIS
 #' @param maxIter
@@ -205,7 +209,7 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #' @examples
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
                           dTstar_tilde_range,
-                          drawAlphas = function() rdirichlet(1, c(1, 1, 7)),
+                          alphas_upper = NULL,
                           nRF = 10, nIS = 5, maxIter = nIS * 20){
 
   RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
@@ -217,15 +221,24 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
   for(i in 1:nrow(RFdraws)){
     obs <- as.list(RFdraws[i,])
 
+    # Upper bounds for a0, a1 by intersecting prior and data restrictions
+    usePrior <- !is.null(alphas_upper) & (all(alphas_upper) > 0) & (sum(alphas_upper) < 1)
+    if(usePrior){
+     a0upper <- min(obs$a0upper, alphas_upper[1])
+     a1upper <- min(obs$a1upper, alphas_upper[2])
+    }else{
+      a0upper <- obs$a0upper
+      a1upper <- obs$a1upper
+    }
+
     successCount <- tryCount <- 0
     tempSlice <- emptySlice
 
     while((tryCount < maxIter) & (successCount < nIS)){
 
       dTstar_tilde <- runif(1, dTstar_tilde_range[1], dTstar_tilde_range[2])
-      alphas <- drawAlphas()
-      a0 <- alphas[1]
-      a1 <- alphas[2]
+      a0 <- runif(1, 0, a0upper)
+      a1 <- runif(1, 0, a1upper)
       dz_tilde <- get_dz_tilde_check(dTstar_tilde, a0, a1, obs)
       tryCount <- tryCount + 1
 
