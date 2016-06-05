@@ -71,6 +71,7 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
     obs$N4 <- drop(cov(Tobs, x) %*% s_xT_upper)
   }else{
     # Case without covariates!
+    obs$s_zT_upper <- 1 / (cov(z, Tobs))
     obs$N1 <- obs$N2 <- obs$N3 <- obs$N4 <- 0
   }
   return(obs)
