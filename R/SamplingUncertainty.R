@@ -156,7 +156,7 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
     N1 <- N3 <- rep(0, nDraws) # Varies across draws
   }
 
-  # Pack things up and return somehow...
+  # Pack things up and return
   obsDraws <- data.frame(n = rep(n, nDraws),
                          p = rep(p, nDraws),
                          q = rep(q, nDraws),
@@ -199,6 +199,7 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #' @param data
 #' @param dTstar_tilde_range
 #' @param alphas_upper
+#' @param IJ
 #' @param nRF
 #' @param nIS
 #' @param maxIter
@@ -210,9 +211,16 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
                           dTstar_tilde_range,
                           alphas_upper = NULL,
+                          IJ = FALSE,
                           nRF = 10, nIS = 5, maxIter = nIS * 20){
 
-  RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
+  if(IJ){
+    stopifnot(controls = NULL)
+    RFdraws <- drawObsIJ(y_name, T_name, z_name, data, nDraws = nRF)
+  }else{
+    RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
+  }
+
   emptySlice <- matrix(NA_real_, nIS, 5)
   emptySlice <- data.frame(emptySlice)
   names(emptySlice) <- c("a0", "a1", "dTstar_tilde", "dz_tilde", "beta")

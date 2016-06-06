@@ -111,3 +111,88 @@ drawDPM <- function(X, nDraws = 5000, burnIn = 1000, maxClust = 50,
   return(draws)
 }
 
+#' Process results of drawDPM to drop empty clusters
+#'
+#' @param draws Output of drawDPM
+#'
+#' @return List of lists with values for non-empty clusters
+#' @export
+#'
+#' @examples
+onlyActive <- function(draws){
+  nDraws <- with(draws, ncol(K))
+  active <- with(draws, lapply(1:nDraws, function(col) unique(K[,col])))
+  pActive <- with(draws, lapply(1:nDraws,
+                              function(i) p[active[[i]],i] / sum(p[active[[i]],i])))
+  muActive <- with(draws, lapply(1:nDraws, function(i) mu[active[[i]],i]))
+  sigma_sqActive <- with(draws, lapply(1:nDraws,
+                                       function(i) sigma_sq[active[[i]],i]))
+  out <- list(mu = muActive, sigma_sq = sigma_sqActive, K = draws$K,
+              p = pActive, alpha = draws$alpha, theta = draws$theta)
+  return(out)
+}
+
+#' Generate reduced form draws for particular cell
+#'
+#' @param y_cell Observations for one of the four cells.
+#'
+#' @return Reduced form draws
+#' @export
+#'
+#' @examples
+cellOutput <- function(y_cell){
+  s_cell <- sd(y_cell)
+  draws <- drawDPM(y_cell / s_cell, A = 10000, nu1 = 2, nu2 = 2)
+  draws$mu <- draws$mu * s_cell
+  draws$sigma_sq <- draws$sigma_sq * s_cell^2
+  draws<- onlyActive(draws)
+  means <- mapply(function(p, m) sum(p * m), p = draws$p, m = draws$mu)
+  vars <-  mapply(function(p, m, s_sq) sum(p * s_sq) + sum(p * m^2) - sum(p * m)^2,
+                       p = draws$p, m = draws$mu, s_sq = draws$sigma_sq)
+  out <- list(mu = draws$mu, p = draws$p, sigma_sq = draws$sigma_sq, cellMean = means,
+              cellVar = vars)
+  return(out)
+}
+
+alphaBoundsIndep <- function(p0, p1, draw00, draw01, draw10, draw11){
+
+}
+
+
+drawObsIJ <- function(y_name, T_name, z_name, data, nDraws = 1000){
+
+  # Do tons of stuff...
+
+  # Pack things up and return
+  obsDraws <- data.frame(n = rep(n, nDraws),
+                         p = rep(p, nDraws),
+                         q = rep(q, nDraws),
+                         p0 = rep(p0, nDraws),
+                         p1 = rep(p1, nDraws),
+                         a0upper = a0upper, #VECTOR!
+                         a1upper = a1upper, #VECTOR!
+                         p00 = rep(p00, nDraws),
+                         p01 = rep(p01, nDraws),
+                         p10 = rep(p10, nDraws),
+                         p11 = rep(p11, nDraws),
+                         yb00 = yb00,
+                         yb01 = yb01,
+                         yb10 = yb10,
+                         yb11 = yb11,
+                         yt00 = yt00,
+                         yt01 = yt01,
+                         yt10 = yt10,
+                         yt11 = yt11,
+                         s2_00 = s2_00, #VECTOR!
+                         s2_01 = s2_01, #VECTOR!
+                         s2_10 = s2_10, #VECTOR!
+                         s2_11 = s2_11, #VECTOR!
+                         s_zT_upper = rep(s_zT_upper, nDraws),
+                         N1 = N1,
+                         N2 = rep(N2, nDraws),
+                         N3 = N3,
+                         N4 = rep(N4, nDraws),
+                         beta_iv = beta_iv)
+  return(obsDraws)
+}
+
