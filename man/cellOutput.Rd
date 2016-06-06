@@ -2,17 +2,21 @@
 % Please edit documentation in R/IshwaranJames.R
 \name{cellOutput}
 \alias{cellOutput}
-\title{Generate reduced form draws for particular cell}
+\title{Generate reduced form draws for particular (Tobs, Z) cell}
 \usage{
-cellOutput(y_cell)
+cellOutput(y_cell, nDraws = 5000, burnIn = 1000)
 }
 \arguments{
 \item{y_cell}{Observations for one of the four cells.}
+
+\item{nDraws}{Number of MCMC draws}
+
+\item{burnIn}{Number of burn-in MCMC draws}
 }
 \value{
-Reduced form draws
+Reduced form draws after removing "inactive" clusters
 }
 \description{
-Generate reduced form draws for particular cell
+Generate reduced form draws for particular (Tobs, Z) cell
 }
 

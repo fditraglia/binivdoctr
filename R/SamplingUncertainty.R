@@ -151,7 +151,7 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
     N3 <- drop(cov(Tobs, x) %*% t(gamma_iv))
 
   }else{
-    sigma_zT_upper <- 1 / cov(z, Tobs) # Used to compute beta, Doesn't vary across draws
+    s_zT_upper <- 1 / cov(z, Tobs) # Used to compute beta, Doesn't vary across draws
     N2 <- N4 <- 0 # Don't vary across draws
     N1 <- N3 <- rep(0, nDraws) # Varies across draws
   }
