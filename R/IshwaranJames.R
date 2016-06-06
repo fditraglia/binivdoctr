@@ -144,8 +144,7 @@ onlyActive <- function(draws){
 #' @examples
 cellOutput <- function(y_cell, nDraws = 5000, burnIn = 1000){
   s_cell <- sd(y_cell)
-  draws <- drawDPM(y_cell / s_cell, nDraws = nDraws, burnIn = burnIn,
-                   A = 10000, nu1 = 2, nu2 = 2)
+  draws <- drawDPM(y_cell / s_cell, nDraws = nDraws, burnIn = burnIn)
   draws$mu <- draws$mu * s_cell
   draws$sigma_sq <- draws$sigma_sq * s_cell^2
   draws<- onlyActive(draws)
@@ -235,6 +234,19 @@ alphaBoundsIndep <- function(p0, p1, draw00, draw01, draw10, draw11){
 }
 
 
+#' Draw reduced form parameters from Ishwaran & James DPM
+#'
+#' @param y_name Name of outcome
+#' @param T_name Name of treatment
+#' @param z_name Name of instrument
+#' @param data Dataframe
+#' @param nDraws Number of MCMC draws
+#' @param burnIn Number of burn-in draws
+#'
+#' @return Matrix of reduced form draws
+#' @export
+#'
+#' @examples
 drawObsIJ <- function(y_name, T_name, z_name, data,
                       nDraws = 1000, burnIn = 1000){
 
