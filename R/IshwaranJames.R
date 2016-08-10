@@ -313,8 +313,8 @@ drawObsIJ <- function(y_name, T_name, z_name, data,
 
   # No controls for the time being!
   s_zT_upper <- 1 / cov(z, Tobs) # Used to compute beta, Doesn't vary across draws
-  N2 <- N4 <- 0 # Don't vary across draws even if there are covariates
-  N1 <- N3 <- rep(0, nDraws) # Vary across draws when there are covariates
+  C2 <- C4 <- 0 # Don't vary across draws even if there are covariates
+  C1 <- C3 <- rep(0, nDraws) # Vary across draws when there are covariates
 
 
   # Pack things up and return
@@ -342,10 +342,10 @@ drawObsIJ <- function(y_name, T_name, z_name, data,
                          s2_10 = s2_10, #VECTOR!
                          s2_11 = s2_11, #VECTOR!
                          s_zT_upper = rep(s_zT_upper, nDraws),
-                         N1 = N1,
-                         N2 = rep(N2, nDraws),
-                         N3 = N3,
-                         N4 = rep(N4, nDraws),
+                         C1 = C1,
+                         C2 = rep(C2, nDraws),
+                         C3 = C3,
+                         C4 = rep(C4, nDraws),
                          beta_iv = beta_iv)
   return(obsDraws)
 }
