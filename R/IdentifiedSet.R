@@ -99,14 +99,7 @@ get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
   D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
               ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
 
-
-  #K_first <- with(obs, g / (p0 - p1))
-  #K_second <- with(obs, ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1)))
-  #K <- K_first - K_second - h
-
   F <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
-  # F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
-  # F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n - 1
   S <- with(obs, (p1 - p0)/(1 - a0 - a1))
   B <- with(obs,(g-(p0-p1)*h)/(1-a0-a1)-((p0-a0)*(p1-a0)*D)/((p-a0)*(1-a0-a1)))
   S_tilde <- with(obs,1/(F*C4-(C2-1)/S))
@@ -135,19 +128,7 @@ get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
   D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
               ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
 
-  #K_first <- with(obs, g / (p0 - p1))
-  #K_second <- with(obs, ((p0 - a0) * (p1 - a0) * D) / ((p - a0) * (p0 - p1)))
-  #K <- K_first - K_second - h
-
-  #F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
-  #F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n - 1
-  #S <- with(obs, (1 - a0 - a1) / (p0 - p1))
-
-  #denom <- with(obs, (F2 * C4 + S * (C2 - 1)))
-
   F <- with(obs, (1-a0-a1)/((p-a0)*(1-p-a1)))
-  # F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
-  # F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n - 1
   S <- with(obs, (p1 - p0)/(1 - a0 - a1))
   B <- with(obs,(g-(p0-p1)*h)/(1-a0-a1)-((p0-a0)*(p1-a0)*D)/((p-a0)*(1-a0-a1)))
   S_tilde <- with(obs,1/(F*C4-(C2-1)/S))
