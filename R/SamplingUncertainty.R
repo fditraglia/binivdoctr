@@ -143,17 +143,17 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
     s_xT_upper <- matrix(Sigma_inv[-1,1], ncol(x), 1)
 
     # These don't vary across draws
-    N2 <- drop(cov(z, x) %*% s_xT_upper)
-    N4 <- drop(cov(Tobs, x) %*% s_xT_upper)
+    C2 <- drop(cov(z, x) %*% s_xT_upper)
+    C4 <- drop(var(z)*cov(Tobs, x) %*% s_xT_upper)
 
     # These will be vectors: they vary across draws
-    N1 <- drop(cov(z, x) %*% t(gamma_iv) / var(z))
-    N3 <- drop(cov(Tobs, x) %*% t(gamma_iv))
+    C1 <- drop(cov(z, x) %*% t(gamma_iv) / var(z))
+    C3 <- drop(cov(Tobs, x) %*% t(gamma_iv))
 
   }else{
     s_zT_upper <- 1 / cov(z, Tobs) # Used to compute beta, Doesn't vary across draws
-    N2 <- N4 <- 0 # Don't vary across draws
-    N1 <- N3 <- rep(0, nDraws) # Varies across draws
+    C2 <- C4 <- 0 # Don't vary across draws
+    C1 <- C3 <- rep(0, nDraws) # Varies across draws
   }
 
   # Pack things up and return
@@ -181,10 +181,10 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
                          s2_10 = rep(s2_10, nDraws),
                          s2_11 = rep(s2_11, nDraws),
                          s_zT_upper = rep(s_zT_upper, nDraws),
-                         N1 = N1,
-                         N2 = rep(N2, nDraws),
-                         N3 = N3,
-                         N4 = rep(N4, nDraws),
+                         C1 = C1,
+                         C2 = rep(C2, nDraws),
+                         C3 = C3,
+                         C4 = rep(C4, nDraws),
                          beta_iv = beta_iv)
   return(obsDraws)
 }
