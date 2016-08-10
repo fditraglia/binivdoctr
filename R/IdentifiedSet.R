@@ -65,14 +65,14 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
     Sigma_inv <- solve(Sigma)
     obs$s_zT_upper <- Sigma_inv[1,1] # need this to back out implied beta
     s_xT_upper <- matrix(Sigma_inv[-1,1], ncol(x), 1)
-    obs$N1 <- drop(cov(z, x) %*% gamma_iv / var(z))
-    obs$N2 <- drop(cov(z, x) %*% s_xT_upper)
-    obs$N3 <- drop(cov(Tobs, x) %*% gamma_iv)
-    obs$N4 <- drop(cov(Tobs, x) %*% s_xT_upper)
+    obs$C1 <- drop(cov(z, x) %*% gamma_iv / var(z))
+    obs$C2 <- drop(cov(z, x) %*% s_xT_upper)
+    obs$C3 <- drop(cov(Tobs, x) %*% gamma_iv)
+    obs$C4 <- drop(cov(Tobs, x) %*% s_xT_upper)
   }else{
     # Case without covariates!
     obs$s_zT_upper <- 1 / (cov(z, Tobs))
-    obs$N1 <- obs$N2 <- obs$N3 <- obs$N4 <- 0
+    obs$C1 <- obs$C2 <- obs$C3 <- obs$C4 <- 0
   }
   return(obs)
 }
@@ -107,7 +107,7 @@ get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
   F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n - 1
   S <- with(obs, (1 - a0 - a1) / (p0 - p1))
 
-  return(with(obs, K - F1 * N3 - S * N1 + (F2 * N4 + S * (N2 - 1)) * dz_tilde))
+  return(with(obs, K - F1 * C3 - S * C1 + (F2 * C4 + S * (C2 - 1)) * dz_tilde))
 }
 
 #' Calculate endogeneity of binary instrument
@@ -138,8 +138,8 @@ get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
   F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n - 1
   S <- with(obs, (1 - a0 - a1) / (p0 - p1))
 
-  denom <- with(obs, (F2 * N4 + S * (N2 - 1)))
-  return(with(obs, (F1 * N3 + S * N1 - K) / (denom) + (1 / (denom)) *
+  denom <- with(obs, (F2 * C4 + S * (C2 - 1)))
+  return(with(obs, (F1 * C3 + S * C1 - K) / (denom) + (1 / (denom)) *
                 dTstar_tilde))
 }
 
@@ -264,7 +264,7 @@ get_dTstar_tilde_check <- function(dz_tilde, a0, a1, obs){
     g <- with(obs, (yt01 - yt00) - a1 * ((yt01 - yt00) + (yt11 - yt10)))
     D <- with(obs, ((1 - a0) * yt10 - a0 * yt00)/(p0 - a0) -
                 ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
-    dz <- with(obs, N1 - (N2 - 1) * dz_tilde)
+    dz <- with(obs, C1 - (C2 - 1) * dz_tilde)
     m11 <- with(obs, (g - (1 - a0 - a1) * dz - (p0 - a0) * D) / (p0 - p1))
     constraint_fails <- sapply(m11_bounds, function(x)
       (m11 >= x[1] & m11 <= x[2]))
@@ -310,8 +310,8 @@ get_dz_tilde_check <- function(dTstar_tilde, a0, a1, obs){
                 ((1 - a0) * yt11 - a0 * yt01)/(p1 - a0))
     F1 <- with(obs, (1 - a0 - a1) / ((p - a0) * (1 - p - a1)))
     F2 <- with(obs, (n / (n-1)) * q * (1 - q) * F1) # var(z) in R divides by n-1
-    dTstar <- with(obs, dTstar_tilde + F1 * N3 -
-      F2 * N4 * get_dz_tilde(dTstar_tilde, a0, a1, obs))
+    dTstar <- with(obs, dTstar_tilde + F1 * C3 -
+      F2 * C4 * get_dz_tilde(dTstar_tilde, a0, a1, obs))
     m11 <- with(obs, ((p - a0) * (dTstar + h) - (1 - q) * (p0 - a0) * D) /
       ((1 - q) * (p0 - a0) + q * (p1 - a0)))
     constraint_fails <- sapply(m11_bounds, function(x)
