@@ -4,9 +4,9 @@
 \alias{plot_fixed_dTstar}
 \title{Fixed dTstar plot}
 \usage{
-plot_fixed_dTstar(obs, dTstar, a0_range = seq(0, 0.2, 0.01),
-  a1_range = seq(0, 0.2, 0.01), theta = 0, phi = 15, forceZero = TRUE,
-  xlab = "a0", ylab = "a1", zlab = "dz", col = "dodgerblue2")
+plot_fixed_dTstar(obs, dTstar, alpha_grid = 0.005, theta = 0, phi = 15,
+  forceZero = TRUE, xlab = "a0", ylab = "a1", zlab = "dz",
+  col = "dodgerblue2")
 }
 \arguments{
 \item{forceZero}{}

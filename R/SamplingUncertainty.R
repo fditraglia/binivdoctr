@@ -204,6 +204,12 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #' @export
 #'
 #' @examples
+#' afghanControls <- c("headchild", "age",  "yrsvill",  "farsi",  "tajik",
+#'                    "farmers",  "agehead",  "educhead",  "nhh",  "land",
+#'                    "sheep", "distschool", "chagcharan")
+
+#' foo <- draw_dz_tilde("testscore", "enrolled", "buildschool", afghanControls,
+#'                      afghan, dTstar_tilde_range = c(0, 1))
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
                           dTstar_tilde_range, nRF = 500, nIS = 500){
 

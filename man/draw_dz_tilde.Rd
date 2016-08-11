@@ -13,4 +13,11 @@ draw_dz_tilde(y_name, T_name, z_name, controls = NULL, data,
 \description{
 Make draws for dz_tilde
 }
+\examples{
+afghanControls <- c("headchild", "age",  "yrsvill",  "farsi",  "tajik",
+                   "farmers",  "agehead",  "educhead",  "nhh",  "land",
+                   "sheep", "distschool", "chagcharan")
+foo <- draw_dz_tilde("testscore", "enrolled", "buildschool", afghanControls,
+                     afghan, dTstar_tilde_range = c(0, 1))
+}
 
