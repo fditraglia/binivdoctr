@@ -223,5 +223,64 @@ rm(keep)
 devtools::use_data(gelbach, overwrite = TRUE)
 rm(gelbach)
 
+# ===========================================================================
+# Burde and Linden (2013, AEJ Applied) - Bringing Education to Afghan Girls
+# The paper does not report IV. We use the controls from Table 2.
+# ===========================================================================
+download.file("https://www.aeaweb.org/aej/app/data/2012-0252_data.zip",
+              "./data-raw/afghan.zip")
+unzip("./data-raw/afghan.zip",
+      files = "Data_20120252 2015-06-15/afghanistan_anonymized_data.dta",
+      exdir = "./data-raw", junkpaths = TRUE)
+afghan <- haven::read_dta("./data-raw/afghanistan_anonymized_data.dta")
+system("rm ./data-raw/afghan.zip")
 
+# Remove outliers following the authors' STATA code
+outlier <- with(afghan, (f07_num_ppl_hh_cnt > 20 & f07_observed == 1) |
+                  (f07_jeribs_cnt > 10 & f07_observed == 1) |
+                  (f07_num_sheep_cnt > 50 & f07_observed == 1) |
+                  (s08_num_ppl_hh_cnt > 20 & s08_observed == 1) |
+                  (s08_jeribs_cnt > 10 & s08_observed == 1) |
+                  (s08_num_sheep_cnt > 50 & s08_observed == 1))
+afghan <- afghan[!outlier,]
+
+# The variable "treatment" is actually our instrument
+# --- living in a village that gets a school
+z <- afghan$treatment
+
+# The variable "f08_formal_school" is our treatment
+# --- enrolled in formal school, Spring 2008
+Tobs <- afghan$s08_formal_school
+
+# The variable "s08_formal_school" is our outcome
+# --- total normalized test score, Spring 2008
+y <- afghan$s08_both_norma_total
+
+afghan <- with(afghan, data.frame(Tobs = Tobs, y = y, z = z,
+                               #"c" = as.factor(clustercode), #only for cluster SE
+                               "headchild" = s08_heads_child_cnt,
+                               "female" = s08_girls_cnt,
+                               "age" = s08_age_cnt,
+                               "yrsvill" = s08_duration_village_cnt,
+                               "farsi" = s08_farsi_cnt,
+                               "tajik" = s08_tajik_cnt,
+                               "farmers" = s08_farmer_cnt,
+                               "agehead" = s08_age_head_cnt,
+                               "educhead" = s08_yrs_ed_head_cnt,
+                               "nhh" = s08_num_ppl_hh_cnt,
+                               "land" = s08_jeribs_cnt,
+                               "sheep" = s08_num_sheep_cnt,
+                               "distschool" = s08_nearest_scl,
+                               "chagcharan" = chagcharan)) # District dummy
+                                # Not mentioned in paper!
+
+# remove missing observations
+afghan <- na.omit(afghan)
+rm(Tobs, y, z)
+
+# only look at girls
+afghan <- subset(afghan, female == 1)
+
+devtools::use_data(afghan, overwrite = TRUE)
+rm(afghan)
 
