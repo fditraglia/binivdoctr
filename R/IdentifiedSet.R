@@ -106,7 +106,7 @@ get_dTstar_tilde <- function(dz_tilde, a0, a1, obs){
   S_tilde <- with(obs, S / (S * Ff * C4 - C2 + 1))
   B_tilde <- with(obs, (S * Ff * C3 + B - C1) / (S * Ff * C4 - C2 + 1))
 
-  return(with(obs, -B_tilde/S_tilde+(1/S_tilde)*dz_tilde))
+  return(with(obs, -B_tilde / S_tilde + (1 / S_tilde) * dz_tilde))
 }
 
 #' Calculate endogeneity of binary instrument
@@ -136,7 +136,47 @@ get_dz_tilde <- function(dTstar_tilde, a0, a1, obs){
   S_tilde <- with(obs, S / (S * Ff * C4 - C2 + 1))
   B_tilde <- with(obs, (S * Ff * C3 + B - C1) / (S * Ff * C4 - C2 + 1))
 
-  return(with(obs, B_tilde+S_tilde*dTstar_tilde))
+  return(with(obs, B_tilde + S_tilde * dTstar_tilde))
+}
+
+
+#' Calculate sharp bounds for a0 and a1
+#'
+#' @param obs List of observables calculated by \code{getObs}.
+#'
+#' @return Vector with two elements: the first is the upper bound for a0 and the
+#' second is the upper bound for a1. (The lower bounds for each are both zero.)
+#' @export
+#' @examples
+#' afghanControls <- c("headchild", "age",  "yrsvill",  "farsi",  "tajik",
+#'                    "farmers",  "agehead",  "educhead",  "nhh",  "land",
+#'                    "sheep", "distschool", "chagcharan")
+#' afghanY <- "testscore"
+#' afghanT <- "enrolled"
+#' afghanZ <- "buildschool"
+#' afghanObs <- getObs(afghanY, afghanT, afghanZ, afghanControls, afghan)
+#' get_alpha_bounds(afghanObs)
+get_alpha_bounds <- function(obs){
+
+  A0 <- with(obs, p0 * (1 - p0) * (yb10 - yb00)^2 + (1 - p0) * s2_00 + p0 * s2_10)
+  A1 <- with(obs, p1 * (1 - p1) * (yb11 - yb01)^2 + (1 - p1) * s2_01 + p1 * s2_11)
+  Q0 <- with(obs, p0^2 * s2_10 - (1 - p0)^2 * s2_00)
+  Q1 <- with(obs, p1^2 * s2_11 - (1 - p1)^2 * s2_01)
+
+  quad_a0_0 <- with(obs, c(p0^2 * s2_10, -Q0 - A0, A0))
+  quad_a0_1 <- with(obs, c(p1^2 * s2_11, -Q1 - A1, A1))
+  roots_a0_0 <- Re(polyroot(quad_a0_0))
+  roots_a0_1 <- Re(polyroot(quad_a0_1))
+  a0_upper <- min(c(roots_a0_0, roots_a0_1))
+
+  quad_a1_0 <- with(obs, c((1 - p0)^2 * s2_00, Q0 - A0, A0))
+  quad_a1_1 <- with(obs, c((1 - p1)^2 * s2_01, Q1 - A1, A1))
+  roots_a1_0 <- Re(polyroot(quad_a1_0))
+  roots_a1_1 <- Re(polyroot(quad_a1_1))
+  a1_upper <- min(c(roots_a1_0, roots_a1_1))
+
+  return(c(a0 = a0_upper, a1 = a1_upper))
+
 }
 
 
@@ -160,13 +200,13 @@ get_m11_bounds <- function(a0, a1, obs){
   ybStar10 <- with(obs, ((1 - a0) * yt10 - a0 * yt00) / (p0 - a0))
   ybStar11 <- with(obs, ((1 - a0) * yt11 - a0 * yt01) / (p1 - a0))
   V00 <- with(obs, a1 * (1 - a0) * (p0 - a0) * (1 - p0 - a1) /
-    ((1 - p0)^2 * (1 - a0 - a1)^2))
+                ((1 - p0)^2 * (1 - a0 - a1)^2))
   V10 <- with(obs, a1 * (1 - a0) * (p1 - a0) * (1 - p1 - a1) /
-    ((1 - p1)^2 * (1 - a0 - a1)^2))
+                ((1 - p1)^2 * (1 - a0 - a1)^2))
   V01 <- with(obs, a0 * (1 - a1) * (p0 - a0) * (1 - p0 - a1) /
-    (p0^2 * (1 - a0 - a1)^2))
+                (p0^2 * (1 - a0 - a1)^2))
   V11 <- with(obs, a0 * (1 - a1) * (p1 - a0) * (1 - p1 - a1) /
-    (p1^2 * (1 - a0 - a1)^2))
+                (p1^2 * (1 - a0 - a1)^2))
 
   # Restrictions for m10
   c00 <- with(obs, -1 * (ybStar10 * (ybStar10 - 2 * m00) - s2_00 / V00))
@@ -198,13 +238,13 @@ get_m11_bounds <- function(a0, a1, obs){
   # Case I: no bounds from var conditions.
   if(all(is.na(unlist(roots)))){
     return(list(NA))
-  # Case II: bounds for m11 only from var conditions.
+    # Case II: bounds for m11 only from var conditions.
   }else if(all(is.na(roots$m10)) & all(!is.na(roots$m11))){
     return(list(roots$m11))
-  # Case II: bounds for m10 only from var conditions
+    # Case II: bounds for m10 only from var conditions
   }else if(all(!is.na(roots$m10)) & all(is.na(roots$m11))){
     return(list(roots$m10 - D)) # Implied bound for m11
-  # Case IV: bounds for both m10 and m11 from var conditions
+    # Case IV: bounds for both m10 and m11 from var conditions
   }else{
     set1 <- roots$m10 - D # Implied bound for m11
     set2 <- roots$m11
@@ -218,11 +258,11 @@ get_m11_bounds <- function(a0, a1, obs){
     }
     # Case (a): O is a subset of L
     if(min(L) <= min(O) & max(L) >= max(O)){
-     return(list(L))
-    # Case (b): O is not a subset of L but O and L overlap
+      return(list(L))
+      # Case (b): O is not a subset of L but O and L overlap
     }else if(min(L) <= min(O) & max(L) <= max(O) & min(O) <= max(L)){
       return(list(c(min(L), max(O))))
-    # Case (c): O and L are disjoint
+      # Case (c): O and L are disjoint
     }else{
       return(list(L, O))
     }
@@ -308,7 +348,7 @@ get_dz_tilde_check <- function(dTstar_tilde, a0, a1, obs){
     dTstar <- with(obs, dTstar_tilde + Ff * C3 -
                      Ff * C4 * get_dz_tilde(dTstar_tilde, a0, a1, obs))
     m11 <- with(obs, ((p - a0) * (dTstar + h) - (1 - q) * (p0 - a0) * D) /
-      ((1 - q) * (p0 - a0) + q * (p1 - a0)))
+                  ((1 - q) * (p0 - a0) + q * (p1 - a0)))
     constraint_fails <- sapply(m11_bounds, function(x)
       (m11 >= x[1] & m11 <= x[2]))
     if(any(constraint_fails)){
@@ -318,5 +358,3 @@ get_dz_tilde_check <- function(dTstar_tilde, a0, a1, obs){
     }
   }
 }
-
-
