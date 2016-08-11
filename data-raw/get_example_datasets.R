@@ -246,17 +246,16 @@ afghan <- afghan[!outlier,]
 
 # The variable "treatment" is actually our instrument
 # --- living in a village that gets a school
-z <- afghan$treatment
 
 # The variable "f08_formal_school" is our treatment
 # --- enrolled in formal school, Spring 2008
-Tobs <- afghan$s08_formal_school
 
 # The variable "s08_formal_school" is our outcome
 # --- total normalized test score, Spring 2008
-y <- afghan$s08_both_norma_total
-
-afghan <- with(afghan, data.frame(Tobs = Tobs, y = y, z = z,
+afghan <- with(afghan, data.frame(
+                               "enrolled" = s08_formal_school,
+                               "testscore" = s08_both_norma_total,
+                               "buildschool" = treatment,
                                #"c" = as.factor(clustercode), #only for cluster SE
                                "headchild" = s08_heads_child_cnt,
                                "female" = s08_girls_cnt,
@@ -276,7 +275,6 @@ afghan <- with(afghan, data.frame(Tobs = Tobs, y = y, z = z,
 
 # remove missing observations
 afghan <- na.omit(afghan)
-rm(Tobs, y, z)
 
 # only look at girls
 afghan <- subset(afghan, female == 1)
