@@ -116,8 +116,6 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
   q <- mean(z)
   p0 <- mean(Tobs[z == 0])
   p1 <- mean(Tobs[z == 1])
-  a0upper <- min(p0, p1)
-  a1upper <- min(1 - p0, 1 - p1)
   p00 <- mean(Tobs == 0 & z == 0)
   p01 <- mean(Tobs == 0 & z == 1)
   p10 <- mean(Tobs == 1 & z == 0)
@@ -162,8 +160,6 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
                          q = rep(q, nDraws),
                          p0 = rep(p0, nDraws),
                          p1 = rep(p1, nDraws),
-                         a0upper = rep(a0upper, nDraws),
-                         a1upper = rep(a1upper, nDraws),
                          p00 = rep(p00, nDraws),
                          p01 = rep(p01, nDraws),
                          p10 = rep(p10, nDraws),
@@ -209,55 +205,33 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #'
 #' @examples
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
-                          dTstar_tilde_range,
-                          alphas_upper = NULL,
-                          IJ = FALSE,
-                          nRF = 10, nIS = 5, maxIter = nIS * 20){
+                          dTstar_tilde_range, nRF = 500, nIS = 500){
 
-  if(IJ){
-    stopifnot(controls = NULL)
-    RFdraws <- drawObsIJ(y_name, T_name, z_name, data, nDraws = nRF)
-  }else{
-    RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
-  }
+  RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
+  alpha_bounds <- t(sapply(1:nrow(RFdraws), function(i) get_alpha_bounds(RFdraws[i,])))
+  RFdraws <- cbind(RFdraws, alpha_bounds)
 
-  emptySlice <- matrix(NA_real_, nIS, 5)
-  emptySlice <- data.frame(emptySlice)
+  emptySlice <- data.frame(matrix(NA_real_, nIS, 5))
   names(emptySlice) <- c("a0", "a1", "dTstar_tilde", "dz_tilde", "beta")
   ISdraws <- vector("list", nRF)
 
+  # Loop over reduced form draws
   for(i in 1:nrow(RFdraws)){
-    obs <- as.list(RFdraws[i,])
 
-    # Upper bounds for a0, a1 by intersecting prior and data restrictions
-    usePrior <- !is.null(alphas_upper) & (all(alphas_upper) > 0) & (sum(alphas_upper) < 1)
-    if(usePrior){
-     a0upper <- min(obs$a0upper, alphas_upper[1])
-     a1upper <- min(obs$a1upper, alphas_upper[2])
-    }else{
-      a0upper <- obs$a0upper
-      a1upper <- obs$a1upper
-    }
-
-    successCount <- tryCount <- 0
     tempSlice <- emptySlice
 
-    while((tryCount < maxIter) & (successCount < nIS)){
+    obs <- as.list(RFdraws[i,])
 
-      dTstar_tilde <- runif(1, dTstar_tilde_range[1], dTstar_tilde_range[2])
-      a0 <- runif(1, 0, a0upper)
-      a1 <- runif(1, 0, a1upper)
-      dz_tilde <- get_dz_tilde_check(dTstar_tilde, a0, a1, obs)
-      tryCount <- tryCount + 1
+    dTstar_tilde <- runif(nIS, dTstar_tilde_range[1], dTstar_tilde_range[2])
+    a0 <- runif(nIS, 0, obs$a0upper)
+    a1 <- runif(nIS, 0, obs$a1upper)
+    dz_tilde <- get_dz_tilde(dTstar_tilde, a0, a1, obs)
 
-      if(!is.na(dz_tilde)){
-        successCount <- successCount + 1
-        tempSlice$a0[successCount] <- a0
-        tempSlice$a1[successCount] <- a1
-        tempSlice$dTstar_tilde[successCount] <- dTstar_tilde
-        tempSlice$dz_tilde[successCount] <- dz_tilde
-      }
-    }
+    tempSlice$a0 <- a0
+    tempSlice$a1 <- a1
+    tempSlice$dTstar_tilde <- dTstar_tilde
+    tempSlice$dz_tilde <- dz_tilde
+
     BBS <- (1 - tempSlice$a0 - tempSlice$a1)
     s_ze <- obs$q * (1 - obs$q) * tempSlice$dz_tilde
     tempSlice$beta <- BBS * (obs$beta_iv - s_ze * obs$s_zT_upper)
@@ -265,21 +239,3 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
   }
   return(list(IS = ISdraws, RF = RFdraws))
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

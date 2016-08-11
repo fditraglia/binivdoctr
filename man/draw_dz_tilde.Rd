@@ -5,8 +5,7 @@
 \title{Make draws for dz_tilde}
 \usage{
 draw_dz_tilde(y_name, T_name, z_name, controls = NULL, data,
-  dTstar_tilde_range, alphas_upper = NULL, IJ = FALSE, nRF = 10,
-  nIS = 5, maxIter = nIS * 20)
+  dTstar_tilde_range, nRF = 500, nIS = 500)
 }
 \arguments{
 \item{maxIter}{}
