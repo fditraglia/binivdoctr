@@ -11,7 +11,8 @@ LazyData: TRUE
 Imports:
     Rcpp (>= 0.12.3),
     AER,
-    MASS
+    MASS,
+    coda
 LinkingTo: Rcpp,
     RcppArmadillo
 Suggests:

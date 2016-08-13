@@ -5,10 +5,10 @@
 \title{Make draws for dz_tilde}
 \usage{
 draw_dz_tilde(y_name, T_name, z_name, controls = NULL, data,
-  dTstar_tilde_range, nRF = 500, nIS = 500)
+  dTstar_tilde_range, nRF = 500, nIS = 500, PequalPstar = FALSE)
 }
 \arguments{
-\item{maxIter}{}
+\item{PequalPstar}{}
 }
 \description{
 Make draws for dz_tilde

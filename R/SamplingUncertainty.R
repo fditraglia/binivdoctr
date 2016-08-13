@@ -194,11 +194,10 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #' @param controls
 #' @param data
 #' @param dTstar_tilde_range
-#' @param alphas_upper
 #' @param IJ
 #' @param nRF
 #' @param nIS
-#' @param maxIter
+#' @param PequalPstar
 #'
 #' @return
 #' @export
@@ -211,7 +210,8 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #' foo <- draw_dz_tilde("testscore", "enrolled", "buildschool", afghanControls,
 #'                      afghan, dTstar_tilde_range = c(0, 1))
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
-                          dTstar_tilde_range, nRF = 500, nIS = 500){
+                          dTstar_tilde_range, nRF = 500, nIS = 500,
+                          PequalPstar = FALSE){
 
   RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
   alpha_bounds <- t(sapply(1:nrow(RFdraws), function(i) get_alpha_bounds(RFdraws[i,])))
@@ -225,12 +225,23 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
   for(i in 1:nrow(RFdraws)){
 
     tempSlice <- emptySlice
-
     obs <- as.list(RFdraws[i,])
-
     dTstar_tilde <- runif(nIS, dTstar_tilde_range[1], dTstar_tilde_range[2])
-    a0 <- runif(nIS, 0, obs$a0upper)
-    a1 <- runif(nIS, 0, obs$a1upper)
+
+    # Option that constrains a0 and a1 so that pstar equals p
+    if(PequalPstar){
+      slope <- with(obs, (1 - p) / p)
+      if(slope * obs$a0upper <= obs$a1upper){
+        a0 <- runif(nIS, 0, obs$a0upper)
+      }else{
+        a0 <- runif(nIS, 0, obs$a1upper / slope)
+      }
+      a1 <- slope * a0
+    }else{
+      a0 <- runif(nIS, 0, obs$a0upper)
+      a1 <- runif(nIS, 0, obs$a1upper)
+    }
+
     dz_tilde <- get_dz_tilde(dTstar_tilde, a0, a1, obs)
 
     tempSlice$a0 <- a0
@@ -241,6 +252,58 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
     BBS <- (1 - tempSlice$a0 - tempSlice$a1)
     s_ze <- obs$q * (1 - obs$q) * tempSlice$dz_tilde
     tempSlice$beta <- BBS * (obs$beta_iv - s_ze * obs$s_zT_upper)
+    ISdraws[[i]] <- tempSlice
+  }
+  return(list(IS = ISdraws, RF = RFdraws))
+}
+
+#' Make draws for dTstar_tilde under the assumption that dz_tilde = 0
+#'
+#' @param y_name
+#' @param T_name
+#' @param z_name
+#' @param controls
+#' @param data
+#' @param IJ
+#' @param nRF
+#' @param nIS
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' afghanControls <- c("headchild", "age",  "yrsvill",  "farsi",  "tajik",
+#'                    "farmers",  "agehead",  "educhead",  "nhh",  "land",
+#'                    "sheep", "distschool", "chagcharan")
+#' foo <- draw_dTstar_tilde_valid("testscore", "enrolled", "buildschool",
+#'                      afghanControls, afghan)
+draw_dTstar_tilde_valid <- function(y_name, T_name, z_name, controls = NULL,
+                                    data, nRF = 500, nIS = 500){
+
+  RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
+  alpha_bounds <- t(sapply(1:nrow(RFdraws), function(i) get_alpha_bounds(RFdraws[i,])))
+  RFdraws <- cbind(RFdraws, alpha_bounds)
+
+  emptySlice <- data.frame(matrix(NA_real_, nIS, 4))
+  names(emptySlice) <- c("a0", "a1", "dTstar_tilde", "beta")
+  ISdraws <- vector("list", nRF)
+
+  # Loop over reduced form draws
+  for(i in 1:nrow(RFdraws)){
+
+    tempSlice <- emptySlice
+    obs <- as.list(RFdraws[i,])
+
+    a0 <- runif(nIS, 0, obs$a0upper)
+    a1 <- runif(nIS, 0, obs$a1upper)
+    dTstar_tilde <- get_dTstar_tilde(0, a0, a1, obs) #Assume valid instrument
+
+    tempSlice$a0 <- a0
+    tempSlice$a1 <- a1
+    tempSlice$dTstar_tilde <- dTstar_tilde
+
+    BBS <- (1 - tempSlice$a0 - tempSlice$a1)
+    tempSlice$beta <- BBS * obs$beta_iv
     ISdraws[[i]] <- tempSlice
   }
   return(list(IS = ISdraws, RF = RFdraws))
