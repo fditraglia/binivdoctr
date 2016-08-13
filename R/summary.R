@@ -8,12 +8,12 @@ HPDI <- function(draws, level = 0.9){
 #' Summarize posterior draws from draw_dz_tilde
 #'
 #' @param draws
-#'
+#' @param digits
 #' @return
 #' @export
 #'
 #' @examples
-summarize_dz_draws <- function(draws){
+summarize_dz_draws <- function(draws, digits = 2){
   b_bounds <- t(sapply(draws$IS, function(x) range(x$beta)))
   b_lower <- b_bounds[,1]
   b_upper <- b_bounds[,2]
@@ -39,19 +39,20 @@ summarize_dz_draws <- function(draws){
                a1_upper = HPDI(a1_upper),
                dz_bayes = HPDI(dz_draws),
                b_bayes = HPDI(b_draws))
-  return(round(out, 3))
+  return(round(out, digits))
 }
 
 
 #' Summarize posterior draws from draw_dTstar_tilde
 #'
 #' @param draws
+#' @param digits
 #'
 #' @return
 #' @export
 #'
 #' @examples
-summarize_dTstar_draws <- function(draws){
+summarize_dTstar_draws <- function(draws, digits = 2){
   b_bounds <- t(sapply(draws$IS, function(x) range(x$beta)))
   b_lower <- b_bounds[,1]
   b_upper <- b_bounds[,2]
@@ -77,5 +78,5 @@ summarize_dTstar_draws <- function(draws){
                a1_upper = HPDI(a1_upper),
                dTstar_bayes = HPDI(dTstar_draws),
                b_bayes = HPDI(b_draws))
-  return(round(out, 3))
+  return(round(out, digits))
 }
