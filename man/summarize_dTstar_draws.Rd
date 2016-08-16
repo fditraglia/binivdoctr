@@ -4,10 +4,10 @@
 \alias{summarize_dTstar_draws}
 \title{Summarize posterior draws from draw_dTstar_tilde}
 \usage{
-summarize_dTstar_draws(draws)
+summarize_dTstar_draws(draws, digits = 2)
 }
 \arguments{
-\item{draws}{}
+\item{digits}{}
 }
 \description{
 Summarize posterior draws from draw_dTstar_tilde

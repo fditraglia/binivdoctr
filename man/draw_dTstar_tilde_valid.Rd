@@ -5,7 +5,7 @@
 \title{Make draws for dTstar_tilde under the assumption that dz_tilde = 0}
 \usage{
 draw_dTstar_tilde_valid(y_name, T_name, z_name, controls = NULL, data,
-  nRF = 500, nIS = 500)
+  a0bound = NULL, a1bound = NULL, nRF = 500, nIS = 500)
 }
 \arguments{
 \item{nIS}{}
@@ -17,7 +17,8 @@ Make draws for dTstar_tilde under the assumption that dz_tilde = 0
 afghanControls <- c("headchild", "age",  "yrsvill",  "farsi",  "tajik",
                    "farmers",  "agehead",  "educhead",  "nhh",  "land",
                    "sheep", "distschool", "chagcharan")
-foo <- draw_dTstar_tilde_valid("testscore", "enrolled", "buildschool",
-                     afghanControls, afghan)
+foo <- draw_dTstar_tilde_valid(y_name = "testscore", T_name = "enrolled",
+                               z_name = "buildschool",
+                               controls = afghanControls, data = afghan)
 }
 

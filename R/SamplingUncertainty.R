@@ -93,18 +93,6 @@ getMomentsForSampler <- function(y_name, T_name, z_name, controls = NULL, data){
 drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
                     nDraws = 1000){
 
-  # Draw reduced form parameters
-  moments <- getMomentsForSampler(y_name, T_name, z_name, controls, data)
-  RFdraws <- MASS::mvrnorm(nDraws, moments$mean, moments$var)
-
-  gamma_iv <- RFdraws[,-which(colnames(RFdraws) %in%
-                                c("Treatment", "yb00", "yb01", "yb10", "yb11"))]
-  beta_iv <- RFdraws[,colnames(RFdraws) == "Treatment"]
-  yb00 <- RFdraws[,colnames(RFdraws) == "yb00"]
-  yb01 <- RFdraws[,colnames(RFdraws) == "yb01"]
-  yb10 <- RFdraws[,colnames(RFdraws) == "yb10"]
-  yb11 <- RFdraws[,colnames(RFdraws) == "yb11"]
-
   # Extract data for named columns
   y <- get(y_name, data)
   Tobs <- get(T_name, data)
@@ -125,13 +113,28 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
   s2_10 <- var(y[Tobs == 1 & z == 0])
   s2_11 <- var(y[Tobs == 1 & z == 1])
 
+  # Draw reduced form parameters
+  moments <- getMomentsForSampler(y_name, T_name, z_name, controls, data)
+  RFdraws <- MASS::mvrnorm(nDraws, moments$mean, moments$var)
+
+  yb00 <- RFdraws[, colnames(RFdraws) == "yb00"]
+  yb01 <- RFdraws[, colnames(RFdraws) == "yb01"]
+  yb10 <- RFdraws[, colnames(RFdraws) == "yb10"]
+  yb11 <- RFdraws[, colnames(RFdraws) == "yb11"]
+
   # These are now vectors since yb00 etc are vectors
   yt00 <- (1 - p0) * yb00
   yt01 <- (1 - p1) * yb01
   yt10 <- p0 * yb10
   yt11 <- p1 * yb11
 
+
   if(!is.null(controls)){
+
+    gamma_iv <- RFdraws[,-which(colnames(RFdraws) %in%
+                                c("Treatment", "yb00", "yb01", "yb10", "yb11"))]
+    beta_iv <- RFdraws[, colnames(RFdraws) == "Treatment"]
+
     # No intercept since we "project it out" by working with Cov matrix below
     x <- model.matrix(reformulate(controls, intercept = FALSE), data)
     Sigma <- rbind(cbind(cov(z, Tobs), cov(z, x)),
@@ -149,6 +152,10 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
     C3 <- drop(cov(Tobs, x) %*% t(gamma_iv))
 
   }else{
+    yb1 <- (1 - p1) * yb01 + p1 * yb11
+    yb0 <- (1 - p0) * yb00 + p0 * yb10
+    beta_iv <- (yb1 - yb0) / (p1 - p0)
+
     s_zT_upper <- 1 / cov(z, Tobs) # Used to compute beta, Doesn't vary across draws
     C2 <- C4 <- 0 # Don't vary across draws
     C1 <- C3 <- rep(0, nDraws) # Varies across draws
@@ -194,6 +201,8 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #' @param controls
 #' @param data
 #' @param dTstar_tilde_range
+#' @param a0bounds
+#' @param a1bounds
 #' @param IJ
 #' @param nRF
 #' @param nIS
@@ -207,14 +216,27 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 #'                    "farmers",  "agehead",  "educhead",  "nhh",  "land",
 #'                    "sheep", "distschool", "chagcharan")
 
-#' foo <- draw_dz_tilde("testscore", "enrolled", "buildschool", afghanControls,
-#'                      afghan, dTstar_tilde_range = c(0, 1))
+#' foo <- draw_dz_tilde(y_name = "testscore", T_name = "enrolled",
+#'                      z_name = "buildschool", controls = afghanControls,
+#'                      data = afghan, dTstar_tilde_range = c(0, 1))
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
-                          dTstar_tilde_range, nRF = 500, nIS = 500,
+                          dTstar_tilde_range, a0bound = NULL, a1bound = NULL,
+                          nRF = 500, nIS = 500,
                           PequalPstar = FALSE){
 
-  RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
-  alpha_bounds <- t(sapply(1:nrow(RFdraws), function(i) get_alpha_bounds(RFdraws[i,])))
+  RFdraws <- drawObs(y_name, T_name, z_name, controls, data, nDraws = nRF)
+  alpha_bounds <- t(sapply(1:nrow(RFdraws),
+                           function(i) get_alpha_bounds(RFdraws[i,])))
+  if(!is.null(a0bound)){
+    if((a0bound <= 1) & (a0bound >= 0)){
+      alpha_bounds[, 1] <- pmin(alpha_bounds[, 1], a0bound)
+    }
+  }
+  if(!is.null(a1bound)){
+    if((a1bound <= 1) & (a1bound >= 0)){
+      alpha_bounds[, 2] <- pmin(alpha_bounds[, 2], a1bound)
+    }
+  }
   RFdraws <- cbind(RFdraws, alpha_bounds)
 
   emptySlice <- data.frame(matrix(NA_real_, nIS, 5))
@@ -264,7 +286,8 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
 #' @param z_name
 #' @param controls
 #' @param data
-#' @param IJ
+#' @param a0bound
+#' @param a1bound
 #' @param nRF
 #' @param nIS
 #'
@@ -275,13 +298,25 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
 #' afghanControls <- c("headchild", "age",  "yrsvill",  "farsi",  "tajik",
 #'                    "farmers",  "agehead",  "educhead",  "nhh",  "land",
 #'                    "sheep", "distschool", "chagcharan")
-#' foo <- draw_dTstar_tilde_valid("testscore", "enrolled", "buildschool",
-#'                      afghanControls, afghan)
+#' foo <- draw_dTstar_tilde_valid(y_name = "testscore", T_name = "enrolled",
+#'                                z_name = "buildschool",
+#'                                controls = afghanControls, data = afghan)
 draw_dTstar_tilde_valid <- function(y_name, T_name, z_name, controls = NULL,
-                                    data, nRF = 500, nIS = 500){
+                                    data, a0bound = NULL, a1bound = NULL,
+                                    nRF = 500, nIS = 500){
 
   RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
   alpha_bounds <- t(sapply(1:nrow(RFdraws), function(i) get_alpha_bounds(RFdraws[i,])))
+  if(!is.null(a0bound)){
+    if((a0bound <= 1) & (a0bound >= 0)){
+      alpha_bounds[, 1] <- pmin(alpha_bounds[, 1], a0bound)
+    }
+  }
+  if(!is.null(a1bound)){
+    if((a1bound <= 1) & (a1bound >= 0)){
+      alpha_bounds[, 2] <- pmin(alpha_bounds[, 2], a1bound)
+    }
+  }
   RFdraws <- cbind(RFdraws, alpha_bounds)
 
   emptySlice <- data.frame(matrix(NA_real_, nIS, 4))
