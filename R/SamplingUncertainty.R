@@ -222,7 +222,7 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
                           dTstar_tilde_range, a0bound = NULL, a1bound = NULL,
                           nRF = 500, nIS = 500,
-                          PequalPstar = FALSE){
+                          option = NULL){
 
   RFdraws <- drawObs(y_name, T_name, z_name, controls, data, nDraws = nRF)
   alpha_bounds <- t(sapply(1:nrow(RFdraws),
@@ -250,15 +250,28 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
     obs <- as.list(RFdraws[i,])
     dTstar_tilde <- runif(nIS, dTstar_tilde_range[1], dTstar_tilde_range[2])
 
-    # Option that constrains a0 and a1 so that pstar equals p
-    if(PequalPstar){
-      slope <- with(obs, (1 - p) / p)
-      if(slope * obs$a0upper <= obs$a1upper){
-        a0 <- runif(nIS, 0, obs$a0upper)
+    if(!is.null(option)){
+      # Option that constrains a0 and a1 so that pstar equals p
+      if(option == "PequalPstar"){
+        slope <- with(obs, (1 - p) / p)
+        if(slope * obs$a0upper <= obs$a1upper){
+          a0 <- runif(nIS, 0, obs$a0upper)
+        }else{
+          a0 <- runif(nIS, 0, obs$a1upper / slope)
+        }
+        a1 <- slope * a0
+      # Option that constrains a0 = a1
+      }else if(option == "A0equalA1"){
+        if(obs$a0upper <= obs$a1upper){
+          a0 <- runif(nIS, 0, obs$a0upper)
+          a1 <- a0
+        }else{
+          a1 <- runif(nIS, 0, obs$a1upper)
+          a0 <- a1
+        }
       }else{
-        a0 <- runif(nIS, 0, obs$a1upper / slope)
+        stop("Invalid option specified.")
       }
-      a1 <- slope * a0
     }else{
       a0 <- runif(nIS, 0, obs$a0upper)
       a1 <- runif(nIS, 0, obs$a1upper)

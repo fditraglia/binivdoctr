@@ -6,7 +6,7 @@
 \usage{
 draw_dz_tilde(y_name, T_name, z_name, controls = NULL, data,
   dTstar_tilde_range, a0bound = NULL, a1bound = NULL, nRF = 500,
-  nIS = 500, PequalPstar = FALSE)
+  nIS = 500, option = NULL)
 }
 \arguments{
 \item{PequalPstar}{}
