@@ -4,7 +4,7 @@
 \alias{summarize_dz_draws}
 \title{Summarize posterior draws from draw_dz_tilde}
 \usage{
-summarize_dz_draws(draws, digits = 2)
+summarize_dz_draws(draws)
 }
 \description{
 Summarize posterior draws from draw_dz_tilde

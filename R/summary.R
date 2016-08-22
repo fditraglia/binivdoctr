@@ -1,19 +1,48 @@
-HPDI <- function(draws, level = 0.9){
+get_summary_stats <- function(y_name, T_name, z_name, data, controls = NULL,
+                          robust = FALSE) {
+  first_stage <- reformulate(c(z_name, controls), response = NULL)
+  second_stage <- reformulate(c(T_name, controls), response = y_name)
+  OLS <- lm(second_stage, data)
+  IV <-  AER::ivreg(second_stage, first_stage, data)
+
+  b_OLS <- coef(OLS)[T_name]
+  b_IV <- coef(IV)[T_name]
+
+  if (robust) {
+    se_OLS <- sqrt(diag(sandwich::vcovHC(OLS, type = 'HC0')))[T_name]
+    se_IV <- sqrt(diag(sandwich::vcovHC(IV, type = 'HC0')))[T_name]
+  } else {
+    se_OLS <- sqrt(diag(vcov(OLS)))[T_name]
+    se_IV <- sqrt(diag(vcov(IV)))[T_name]
+  }
+
+  obs <- getObs(y_name, T_name, z_name, controls, data)
+  alpha_bounds <- get_alpha_bounds(obs)
+
+  list(n = nrow(data),
+       b_OLS = b_OLS,
+       se_OLS = se_OLS,
+       b_IV = b_IV,
+       se_IV = se_IV,
+       a0_upper = alpha_bounds[1],
+       a1_upper = alpha_bounds[2])
+}
+
+get_HPDI <- function(draws, level = 0.9){
   interval <- coda::HPDinterval(coda::as.mcmc(draws), level)
   lower <- interval[[1]]
   upper<- interval[[2]]
-  return(data.frame(median = median(draws), lower = lower, upper = upper))
+  return(data.frame(lower = lower, median = median(draws), upper = upper))
 }
 
 #' Summarize posterior draws from draw_dz_tilde
 #'
 #' @param draws
-#' @param digits
 #' @return
 #' @export
 #'
 #' @examples
-summarize_dz_draws <- function(draws, digits = 2){
+summarize_dz_draws <- function(draws){
   b_bounds <- t(sapply(draws$IS, function(x) range(x$beta)))
   b_lower <- b_bounds[,1]
   b_upper <- b_bounds[,2]
@@ -31,28 +60,26 @@ summarize_dz_draws <- function(draws, digits = 2){
   b_draws <- IS$beta
   dz_draws <- IS$dz_tilde
 
-  out <- rbind(b_lower = HPDI(b_lower),
-               b_upper = HPDI(b_upper),
-               dz_lower = HPDI(dz_lower),
-               dz_upper = HPDI(dz_upper),
-               a0_upper = HPDI(a0_upper),
-               a1_upper = HPDI(a1_upper),
-               dz_bayes = HPDI(dz_draws),
-               b_bayes = HPDI(b_draws))
-  return(round(out, digits))
+  rbind(b_lower = get_HPDI(b_lower),
+        b_upper = get_HPDI(b_upper),
+        dz_lower = get_HPDI(dz_lower),
+        dz_upper = get_HPDI(dz_upper),
+        a0_upper = get_HPDI(a0_upper),
+        a1_upper = get_HPDI(a1_upper),
+        dz_bayes = get_HPDI(dz_draws),
+        b_bayes = get_HPDI(b_draws))
 }
 
 
 #' Summarize posterior draws from draw_dTstar_tilde
 #'
 #' @param draws
-#' @param digits
 #'
 #' @return
 #' @export
 #'
 #' @examples
-summarize_dTstar_draws <- function(draws, digits = 2){
+summarize_dTstar_draws <- function(draws){
   b_bounds <- t(sapply(draws$IS, function(x) range(x$beta)))
   b_lower <- b_bounds[,1]
   b_upper <- b_bounds[,2]
@@ -70,13 +97,12 @@ summarize_dTstar_draws <- function(draws, digits = 2){
   b_draws <- IS$beta
   dTstar_draws <- IS$dTstar_tilde
 
-  out <- rbind(b_lower = HPDI(b_lower),
-               b_upper = HPDI(b_upper),
-               dTstar_lower = HPDI(dTstar_lower),
-               dTstar_upper = HPDI(dTstar_upper),
-               a0_upper = HPDI(a0_upper),
-               a1_upper = HPDI(a1_upper),
-               dTstar_bayes = HPDI(dTstar_draws),
-               b_bayes = HPDI(b_draws))
-  return(round(out, digits))
+  rbind(b_lower = HPDI(b_lower),
+        b_upper = HPDI(b_upper),
+        dTstar_lower = HPDI(dTstar_lower),
+        dTstar_upper = HPDI(dTstar_upper),
+        a0_upper = HPDI(a0_upper),
+        a1_upper = HPDI(a1_upper),
+        dTstar_bayes = HPDI(dTstar_draws),
+        b_bayes = HPDI(b_draws))
 }
