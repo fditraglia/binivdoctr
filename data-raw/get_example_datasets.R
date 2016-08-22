@@ -285,3 +285,54 @@ afghan <- subset(afghan, female == 1)
 devtools::use_data(afghan, overwrite = TRUE)
 rm(afghan)
 
+
+# ===========================================================================
+# Courtemanche, Tchernis & Ukert (2015) - The Effect of Smoking on Obesity
+# The paper uses confidential data from the Lung Health Data. Our example is
+# based on summary statistics from this dataset. The outcome is body mass
+# index (BMI), the instrument is encouragement to quit smoking, and the
+# observed treatment is self-reported smoking status: 1 = quit. We examine
+# the five-year horizon.
+# ===========================================================================
+n00 <- 1357
+n01 <- 2018
+n10 <- 451
+n11 <- 1620
+
+yb00 <- 25.89
+yb01 <- 26.09
+yb10 <- 28.48
+yb11 <- 28.28
+
+s2_00 <- 4.42^2
+s2_01 <- 4.40^2
+s2_10 <- 4.61^2
+s2_11 <- 4.44^2
+
+# The easiest way to work with summary statistics is to generate random normal
+# data that matches the statistics exactly. Since our method of incorporating
+# sampling uncertainty only uses these same summary statistics, the precise
+# distribution of the data is irrelevant. This is merely a convenient way to
+# feed the summary statistics directly into our existing code.
+set.seed(1234)
+y00 <- MASS::mvrnorm(n00, yb00, s2_00, empirical = TRUE)
+y01 <- MASS::mvrnorm(n01, yb01, s2_01, empirical = TRUE)
+y10 <- MASS::mvrnorm(n10, yb10, s2_10, empirical = TRUE)
+y11 <- MASS::mvrnorm(n11, yb11, s2_11, empirical = TRUE)
+
+dat00 <- cbind(y00, rep(0, n00), rep(0, n00))
+dat01 <- cbind(y01, rep(0, n01), rep(1, n01))
+dat10 <- cbind(y10, rep(1, n10), rep(0, n10))
+dat11 <- cbind(y11, rep(1, n11), rep(1, n11))
+
+smoking <- as.data.frame(rbind(dat00, dat01, dat10, dat11))
+names(smoking) <- c("BMI", "quit", "program")
+
+rm(s2_00, s2_01, s2_10, s2_11)
+rm(n00, n01, n10, n11)
+rm(yb00, yb10, yb11, yb01)
+rm(y00, y10, y01, y11)
+rm(dat00, dat01, dat10, dat11)
+
+devtools::use_data(smoking, overwrite = TRUE)
+rm(smoking)
