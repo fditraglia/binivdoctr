@@ -1,3 +1,16 @@
+#' Title
+#'
+#' @param y_name
+#' @param T_name
+#' @param z_name
+#' @param data
+#' @param controls
+#' @param robust
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_summary_stats <- function(y_name, T_name, z_name, data, controls = NULL,
                           robust = FALSE) {
   first_stage <- reformulate(c(z_name, controls), response = NULL)
@@ -28,6 +41,15 @@ get_summary_stats <- function(y_name, T_name, z_name, data, controls = NULL,
        a1_upper = alpha_bounds[2])
 }
 
+#' Title
+#'
+#' @param draws
+#' @param level
+#'
+#' @return
+#' @export
+#'
+#' @examples
 get_HPDI <- function(draws, level = 0.9){
   interval <- coda::HPDinterval(coda::as.mcmc(draws), level)
   lower <- interval[[1]]
@@ -35,9 +57,10 @@ get_HPDI <- function(draws, level = 0.9){
   return(data.frame(lower = lower, median = median(draws), upper = upper))
 }
 
-#' Summarize posterior draws from draw_dz_tilde
+#' Title
 #'
 #' @param draws
+#'
 #' @return
 #' @export
 #'
@@ -71,7 +94,7 @@ summarize_dz_draws <- function(draws){
 }
 
 
-#' Summarize posterior draws from draw_dTstar_tilde
+#' Title
 #'
 #' @param draws
 #'
