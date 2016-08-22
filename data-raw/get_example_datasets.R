@@ -165,7 +165,10 @@ keepVars <- c(
   # Indicators of different sample-city years
   "bog95smp", # Bogota 1995
   "bog97smp", # Bogota 1997
-  "jam93smp" # Jamundi 1993
+  "jam93smp", # Jamundi 1993
+  "prscha_1", # Started 6th grade in private school
+  "prscha_2", # Started 7th grade in private school
+  "prsch_c" # Currently in private school
 )
 
 angrist <- angrist[, keepVars]
