@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.R
 \name{summarize_dTstar_draws}
 \alias{summarize_dTstar_draws}
-\title{Summarize posterior draws from draw_dTstar_tilde}
+\title{Title}
 \usage{
 summarize_dTstar_draws(draws)
 }
@@ -10,6 +10,6 @@ summarize_dTstar_draws(draws)
 \item{draws}{}
 }
 \description{
-Summarize posterior draws from draw_dTstar_tilde
+Title
 }
 
