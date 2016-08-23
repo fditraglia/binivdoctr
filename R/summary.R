@@ -120,12 +120,12 @@ summarize_dTstar_draws <- function(draws){
   b_draws <- IS$beta
   dTstar_draws <- IS$dTstar_tilde
 
-  rbind(b_lower = HPDI(b_lower),
-        b_upper = HPDI(b_upper),
-        dTstar_lower = HPDI(dTstar_lower),
-        dTstar_upper = HPDI(dTstar_upper),
-        a0_upper = HPDI(a0_upper),
-        a1_upper = HPDI(a1_upper),
-        dTstar_bayes = HPDI(dTstar_draws),
-        b_bayes = HPDI(b_draws))
+  rbind(b_lower = get_HPDI(b_lower),
+        b_upper = get_HPDI(b_upper),
+        dTstar_lower = get_HPDI(dTstar_lower),
+        dTstar_upper = get_HPDI(dTstar_upper),
+        a0_upper = get_HPDI(a0_upper),
+        a1_upper = get_HPDI(a1_upper),
+        dTstar_bayes = get_HPDI(dTstar_draws),
+        b_bayes = get_HPDI(b_draws))
 }
