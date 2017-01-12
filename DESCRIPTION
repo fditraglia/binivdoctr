@@ -18,5 +18,6 @@ LinkingTo: Rcpp,
 Suggests:
     haven,
     AER,
-    ivpack
+    ivpack,
+    testthat
 RoxygenNote: 5.0.1
