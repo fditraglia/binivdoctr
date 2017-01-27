@@ -178,3 +178,22 @@ get_alpha_bounds <- function(obs){
   return(c(a0upper = a0_upper, a1upper = a1_upper))
 
 }
+
+#' Calculate beta
+#'
+#' @param dTstar_tilde Endogeneity of binary regressor.
+#' @param a0 Probability of observing T = 1 when true treatment status is 0.
+#' @param a1 Probability of observing T = 0 when true treatment status is 1.
+#' @param obs List of observables calculated by \code{getObs}.
+#' @param beta_iv Vector of IV coefficients for beta
+#'
+#' @return Value of beta implied by the data and specified values of regressor endogeneity and mis-classification probabilities.
+#' @export
+#'
+get_beta <- function(dTstar_tilde, a0, a1, obs,beta_iv){
+  
+  dz_tilde <- get_dz_tilde(dTstar_tilde, a0, a1, obs)
+  
+  return(with(obs,(1-a0-a1)*(beta_iv-dz_tilde*q*(1-q)*s_zT_upper)))
+  
+}
