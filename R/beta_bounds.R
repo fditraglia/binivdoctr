@@ -17,10 +17,13 @@ source('rho_bounds.R')
 
 get_beta_bounds <- function(dTstar_tilde_lower,dTstar_tilde_upper,
                             a0_upper, a1_upper,
-                            obs,beta_iv) {
+                            obs,
+                            evaluateInterior=FALSE) {
 
   # Obtain bounds for a0 and a1 implied by observables,
   # without imposing user beliefs.
+  
+  print(evaluateInterior)
 
   vectorized_alpha_bounds <- function(obs) {
     get_alpha_bounds(as.list(obs))
@@ -41,59 +44,76 @@ get_beta_bounds <- function(dTstar_tilde_lower,dTstar_tilde_upper,
   # Candidate Set I - Corner for both a0 and a1
   print('Beta bounds: Evaluating corners')
   set1a <- candidate1_beta(dTstar_tilde_lower, a0_upper_bound, a1_upper_bound,
-                           obs,beta_iv)
+                           obs)
   set1b <- candidate1_beta(dTstar_tilde_upper, a0_upper_bound, a1_upper_bound,
-                           obs,beta_iv)
+                           obs)
 
   print('Beta bounds: Evaluating edges')
   # Candidate Set II - Corner for a0 and interior for a1
   set2a <- candidate2_beta(dTstar_tilde_lower, rep(0,length(a0_upper_bound)),
                            a0_upper_bound,a1_upper_bound,
-                           obs,beta_iv)
+                           obs)
   set2b <- candidate2_beta(dTstar_tilde_upper, a0_upper_bound,
                            a0_upper_bound,a1_upper_bound,
-                           obs,beta_iv)
+                           obs)
 
   # Candidate Set III - Interior for a0, corner for a1
   set3a <- candidate3_beta(dTstar_tilde_lower, rep(0,length(a1_upper_bound)),
                            a0_upper_bound,a1_upper_bound,
-                           obs,beta_iv)
+                           obs)
   set3b <- candidate3_beta(dTstar_tilde_upper, a1_upper_bound,
                            a0_upper_bound,a1_upper_bound,
-                           obs,beta_iv)
+                           obs)
 
-  print('Beta bounds: Evaluation interior solution')
-  # Candidate Set IV - Interior for both a0 and a1
-  set4a <- candidate4_beta(dTstar_tilde_lower, a0_upper_bound, a1_upper_bound,
-                           obs,beta_iv)
-  set4b <- candidate4_beta(dTstar_tilde_upper, a0_upper_bound, a1_upper_bound,
-                           obs,beta_iv)
+  if(evaluateInterior) {
 
-  # Finally: overall max and min
-  beta_min <- pmin(set1a$min_corner, set1b$max_corner,
-                       set2a$min_edge,set2b$max_edge,
-                       set3a$min_edge,set3b$max_edge,
-                       set4a$min_int,set4b$max_int,
-                       na.rm = TRUE)
+    print('Beta bounds: Evaluating interior solution')
+    
+    # Candidate Set IV - Interior for both a0 and a1
+    set4a <- candidate4_beta(dTstar_tilde_lower, a0_upper_bound, a1_upper_bound,
+                             obs)
+    set4b <- candidate4_beta(dTstar_tilde_upper, a0_upper_bound, a1_upper_bound,
+                             obs)
+    
+    # Finally: overall max and min
+    beta_min <- pmin(set1a$min_corner, set1b$max_corner,
+                     set2a$min_edge,set2b$max_edge,
+                     set3a$min_edge,set3b$max_edge,
+                     set4a$min_int,set4b$max_int,
+                     na.rm = TRUE)
+    
+    beta_max <- pmax(set1a$max_corner, set1b$max_corner,
+                     set2a$max_edge,set2b$max_edge,
+                     set3a$max_edge,set3b$max_edge,
+                     set4a$max_int,set4b$max_int,
+                     na.rm = TRUE)
+    
+  } else {
+    
+    # Finally: overall max and min
+    beta_min <- pmin(set1a$min_corner, set1b$max_corner,
+                     set2a$min_edge,set2b$max_edge,
+                     set3a$min_edge,set3b$max_edge,
+                     na.rm = TRUE)
+    
+    beta_max <- pmax(set1a$max_corner, set1b$max_corner,
+                     set2a$max_edge,set2b$max_edge,
+                     set3a$max_edge,set3b$max_edge,
+                     na.rm = TRUE)
 
-  beta_max <- pmax(set1a$max_corner, set1b$max_corner,
-                       set2a$max_edge,set2b$max_edge,
-                       set3a$max_edge,set3b$max_edge,
-                       set4a$max_int,set4b$max_int,
-                       na.rm = TRUE)
+  }
 
   data.frame(beta_min = beta_min, beta_max = beta_max)
 
 }
 
 # Evaluates the corners given user bounds. Vectorized wrt a0 and a1 bounds.
-candidate1_beta <- function(dTstar_tilde_bound, a0_upper, a1_upper,
-                            obs,beta_iv) {
+candidate1_beta <- function(dTstar_tilde_bound, a0_upper, a1_upper, obs) {
 
-  corner1 <- get_beta(dTstar_tilde_bound,0,0,obs,beta_iv)
-  corner2 <- get_beta(dTstar_tilde_bound,a0_upper,0,obs,beta_iv)
-  corner3 <- get_beta(dTstar_tilde_bound,0,a1_upper,obs,beta_iv)
-  corner4 <- get_beta(dTstar_tilde_bound,a0_upper,a1_upper,obs,beta_iv)
+  corner1 <- get_beta(dTstar_tilde_bound,0,0,obs)
+  corner2 <- get_beta(dTstar_tilde_bound,a0_upper,0,obs)
+  corner3 <- get_beta(dTstar_tilde_bound,0,a1_upper,obs)
+  corner4 <- get_beta(dTstar_tilde_bound,a0_upper,a1_upper,obs)
   min_corner <- pmin(corner1, corner2, corner3, corner4, na.rm = TRUE)
   max_corner <- pmax(corner1, corner2, corner3, corner4, na.rm = TRUE)
   ans <- list(min_corner = min_corner,
@@ -103,13 +123,12 @@ candidate1_beta <- function(dTstar_tilde_bound, a0_upper, a1_upper,
 
 candidate2_beta <- function(dTstar_tilde_bound, a0,
                             a0_upper_bound,a1_upper_bound,
-                            obs,beta_iv) {
+                            obs) {
 
   # dTstar_tilde_bound <- dxs[44]
   obs$a0_upper_bound <- a0_upper_bound
   obs$a1_upper_bound <- a1_upper_bound
   obs$a0_edge <- a0
-  obs$beta_iv <- beta_iv
 
   # obs_df <- obs
   # obs <- obs_df
@@ -123,7 +142,7 @@ candidate2_beta <- function(dTstar_tilde_bound, a0,
 
       gradient_beta <- foc_beta_a1(dTstar_tilde_bound,
                                    with(obs,a0_edge),a1,
-                                   obs,beta_iv)
+                                   obs)
       return(gradient_beta)
 
     }
@@ -138,7 +157,7 @@ candidate2_beta <- function(dTstar_tilde_bound, a0,
 
       value <- apply(valid_roots,1,
                      function(a) get_beta(dTstar_tilde_bound,
-                                          a[1],a[2],obs,beta_iv))
+                                          a[1],a[2],obs))
 
       min_int <- min(t(value), na.rm = TRUE)
       max_int <- max(t(value), na.rm = TRUE)
@@ -163,16 +182,12 @@ candidate2_beta <- function(dTstar_tilde_bound, a0,
 
 candidate3_beta <- function(dTstar_tilde_bound, a1,
                        a0_upper_bound,a1_upper_bound,
-                       obs,beta_iv) {
+                       obs) {
 
   # dTstar_tilde_bound <- dxs[44]
   obs$a0_upper_bound <- a0_upper_bound
   obs$a1_upper_bound <- a1_upper_bound
   obs$a1_edge <- a1
-  obs$beta_iv <- beta_iv
-
-  # obs_df <- obs
-  # obs <- obs_df
 
   solve_foc <- function(obs) {
 
@@ -182,7 +197,7 @@ candidate3_beta <- function(dTstar_tilde_bound, a1,
     gradient_fn <- function(a0) {
 
       gradient_beta <- foc_beta_a0(dTstar_tilde_bound,a0,
-                                   with(obs,a1_edge),obs,beta_iv)
+                                   with(obs,a1_edge),obs)
       return(gradient_beta)
 
     }
@@ -197,7 +212,7 @@ candidate3_beta <- function(dTstar_tilde_bound, a1,
 
       value <- apply(valid_roots,1,
                      function(a) get_beta(dTstar_tilde_bound,
-                                          a[1],a[2],obs,beta_iv))
+                                          a[1],a[2],obs))
 
       min_int <- min(t(value), na.rm = TRUE)
       max_int <- max(t(value), na.rm = TRUE)
@@ -222,15 +237,11 @@ candidate3_beta <- function(dTstar_tilde_bound, a1,
 
 candidate4_beta <- function(dTstar_tilde_bound,
                             a0_upper_bound, a1_upper_bound,
-                            obs,beta_iv) {
+                            obs) {
 
   # Add bounds to the obs object.
   obs$a0_upper_bound <- a0_upper_bound
   obs$a1_upper_bound <- a1_upper_bound
-  obs$beta_iv <- beta_iv
-
-  # obs_df <- obs
-  # obs <- obs_df
 
   solve_foc <- function(obs) {
 
@@ -242,10 +253,8 @@ candidate4_beta <- function(dTstar_tilde_bound,
       a0 <- a[1]
       a1 <- a[2]
 
-      gradient_beta <- cbind(foc_beta_a0(dTstar_tilde_bound,a0,a1,
-                                            obs,beta_iv),
-                                foc_beta_a1(dTstar_tilde_bound,a0,a1,
-                                            obs,beta_iv))
+      gradient_beta <- cbind(foc_beta_a0(dTstar_tilde_bound,a0,a1,obs),
+                             foc_beta_a1(dTstar_tilde_bound,a0,a1,obs))
       return(gradient_beta)
 
     }
@@ -271,11 +280,11 @@ candidate4_beta <- function(dTstar_tilde_bound,
       if(length(valid_roots == 2)) {
         value <- apply(t(as.matrix(valid_roots)),1,
                        function(a) get_beta(dTstar_tilde_bound,
-                                            a[1],a[2],obs,beta_iv))
+                                            a[1],a[2],obs))
       } else {
         value <- apply(as.matrix(valid_roots),1,
                        function(a) get_beta(dTstar_tilde_bound,
-                                            a[1],a[2],obs,beta_iv))
+                                            a[1],a[2],obs))
       }
 
 
@@ -302,7 +311,7 @@ candidate4_beta <- function(dTstar_tilde_bound,
 
 }
 
-foc_beta_a0 <- function(dTstar_tilde,a0,a1,obs,beta_iv) {
+foc_beta_a0 <- function(dTstar_tilde,a0,a1,obs) {
 
   with(obs,(1-a0-a1)*(q*(1-q)*s_zT_upper*
            (-foc_dztilde_a0(dTstar_tilde,a0,a1,obs)))+
@@ -312,7 +321,7 @@ foc_beta_a0 <- function(dTstar_tilde,a0,a1,obs,beta_iv) {
 
 }
 
-foc_beta_a1 <- function(dTstar_tilde,a0,a1,obs,beta_iv) {
+foc_beta_a1 <- function(dTstar_tilde,a0,a1,obs) {
 
   with(obs,(1-a0-a1)*(q*(1-q)*s_zT_upper*
            (-foc_dztilde_a1(dTstar_tilde,a0,a1,obs)))+

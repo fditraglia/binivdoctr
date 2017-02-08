@@ -66,18 +66,36 @@ get_HPDI <- function(draws, level = 0.9){
 #'
 #' @examples
 summarize_dz_draws <- function(draws){
-  b_bounds <- t(sapply(draws$IS, function(x) range(x$beta)))
-  b_lower <- b_bounds[,1]
-  b_upper <- b_bounds[,2]
-
-  dz_bounds <- t(sapply(draws$IS, function(x) range(x$dz_tilde)))
-  dz_lower <- dz_bounds[,1]
-  dz_upper <- dz_bounds[,2]
 
   a0_bounds <- t(sapply(draws$IS, function(x) range(x$a0)))
   a0_upper <- a0_bounds[,2]
   a1_bounds <- t(sapply(draws$IS, function(x) range(x$a1)))
   a1_upper <- a1_bounds[,2]
+
+  b_bounds_analyt <- get_beta_bounds(draws$dTstar_tilde_range[1],
+                              draws$dTstar_tilde_range[2],
+                              a0_upper+0.15, a1_upper+0.15,draws$RF,
+                              draws$evaluateInterior)
+
+  b_bounds_sim <- t(sapply(draws$IS, function(x) range(x$beta)))
+  
+  b_lower <- pmin(b_bounds_analyt[,1],b_bounds_sim[,1],na.rm=TRUE)
+  b_upper <- pmax(b_bounds_analyt[,2],b_bounds_sim[,2],na.rm=TRUE)
+  
+  b_lower <- b_bounds_analyt[,1]
+  b_upper <- b_bounds_analyt[,2]
+  
+  #dz_bounds <- t(sapply(draws$IS, function(x) range(x$dz_tilde)))
+  dz_bounds_analyt <- get_dz_tilde_bounds(draws$dTstar_tilde_range[1],
+                                    draws$dTstar_tilde_range[2],
+                                    a0_upper, a1_upper,
+                                    draws$RF,
+                                    draws$evaluateInterior)
+
+  dz_bounds_sim <- t(sapply(draws$IS, function(x) range(x$dz_tilde)))
+  
+  dz_lower <- pmin(dz_bounds_analyt[,1],dz_bounds_sim[,1],na.rm=TRUE)
+  dz_upper <- pmax(dz_bounds_analyt[,2],dz_bounds_sim[,2],na.rm=TRUE)
 
   IS <- do.call(rbind, draws$IS)
   b_draws <- IS$beta
@@ -103,10 +121,12 @@ summarize_dz_draws <- function(draws){
 #'
 #' @examples
 summarize_dTstar_draws <- function(draws){
+  
+  # b_bounds <- t(sapply(draws$IS, function(x) range(x$beta)))
   b_bounds <- t(sapply(draws$IS, function(x) range(x$beta)))
   b_lower <- b_bounds[,1]
   b_upper <- b_bounds[,2]
-
+  
   dTstar_bounds <- t(sapply(draws$IS, function(x) range(x$dTstar_tilde)))
   dTstar_lower <- dTstar_bounds[,1]
   dTstar_upper <- dTstar_bounds[,2]

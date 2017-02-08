@@ -58,6 +58,7 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
     second_stage <- reformulate(c(T_name, controls), response = y_name)
     first_stage <- reformulate(c(z_name, controls))
     gamma_iv <- coefficients(AER::ivreg(second_stage, first_stage, data))[-c(1,2)]
+    beta_iv  <- coefficients(AER::ivreg(second_stage, first_stage, data))[c(2)]
     # No intercept since we "project it out" by working with Cov matrix below
     x <- model.matrix(reformulate(controls, intercept = FALSE), data)
     Sigma <- rbind(cbind(cov(z, Tobs), cov(z, x)),
@@ -69,10 +70,20 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
     obs$C2 <- drop(cov(z, x) %*% s_xT_upper)
     obs$C3 <- drop(cov(Tobs, x) %*% gamma_iv)
     obs$C4 <- drop(var(z) * cov(Tobs, x) %*% s_xT_upper)
+    obs$beta_iv <- beta_iv
   }else{
     # Case without covariates!
     obs$s_zT_upper <- 1 / (cov(z, Tobs))
     obs$C1 <- obs$C2 <- obs$C3 <- obs$C4 <- 0
+
+    s_zT_upper <- 1 / cov(z, Tobs)
+    yb1 <- (1 - p1) * yb01 + p1 * yb11
+    yb0 <- (1 - p0) * yb00 + p0 * yb10
+    beta_iv <- (yb1 - yb0) / (p1 - p0)
+
+    obs$beta_iv <- beta_iv
+    obs$s_zT_upper <- s_zT_upper
+
   }
   return(obs)
 }
@@ -190,10 +201,10 @@ get_alpha_bounds <- function(obs){
 #' @return Value of beta implied by the data and specified values of regressor endogeneity and mis-classification probabilities.
 #' @export
 #'
-get_beta <- function(dTstar_tilde, a0, a1, obs,beta_iv){
-  
+get_beta <- function(dTstar_tilde, a0, a1, obs){
+
   dz_tilde <- get_dz_tilde(dTstar_tilde, a0, a1, obs)
-  
+
   return(with(obs,(1-a0-a1)*(beta_iv-dz_tilde*q*(1-q)*s_zT_upper)))
-  
+
 }

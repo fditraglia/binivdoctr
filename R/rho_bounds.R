@@ -1,7 +1,9 @@
 
 get_dz_tilde_bounds <- function(dTstar_tilde_lower,dTstar_tilde_upper,
                                 a0_upper, a1_upper,
-                                obs) {
+                                obs,evaluateInterior = FALSE) {
+  
+  print(evaluateInterior)
   
   # Obtain bounds for a0 and a1 implied by observables,
   # without imposing user beliefs.
@@ -45,23 +47,40 @@ get_dz_tilde_bounds <- function(dTstar_tilde_lower,dTstar_tilde_upper,
   set3b <- candidate3(dTstar_tilde_upper, a1_upper_bound,
                       a0_upper_bound,a1_upper_bound, obs)
   
-  print('dz_tilde bounds: Evaluation interior solution')
-  # Candidate Set IV - Interior for both a0 and a1
-  set4a <- candidate4(dTstar_tilde_lower, a0_upper_bound, a1_upper_bound, obs)
-  set4b <- candidate4(dTstar_tilde_upper, a0_upper_bound, a1_upper_bound, obs)
-  
-  # Finally: overall max and min
-  dz_tilde_min <- pmin(set1a$min_corner, set1b$max_corner,
-                       set2a$min_edge,set2b$max_edge,
-                       set3a$min_edge,set3b$max_edge,
-                       set4a$min_int,set4b$max_int,
-                       na.rm = TRUE)
-  
-  dz_tilde_max <- pmax(set1a$max_corner, set1b$max_corner,
-                   set2a$max_edge,set2b$max_edge,
-                   set3a$max_edge,set3b$max_edge,
-                   set4a$max_int,set4b$max_int,
-                   na.rm = TRUE)
+  if(evaluateInterior) {
+
+    print('dz_tilde bounds: Evaluating interior solution')
+    
+    # Candidate Set IV - Interior for both a0 and a1
+    set4a <- candidate4(dTstar_tilde_lower, a0_upper_bound, a1_upper_bound, obs)
+    set4b <- candidate4(dTstar_tilde_upper, a0_upper_bound, a1_upper_bound, obs)
+    
+    # Finally: overall max and min
+    dz_tilde_min <- pmin(set1a$min_corner, set1b$max_corner,
+                         set2a$min_edge,set2b$max_edge,
+                         set3a$min_edge,set3b$max_edge,
+                         set4a$min_int,set4b$max_int,
+                         na.rm = TRUE)
+    
+    dz_tilde_max <- pmax(set1a$max_corner, set1b$max_corner,
+                         set2a$max_edge,set2b$max_edge,
+                         set3a$max_edge,set3b$max_edge,
+                         set4a$max_int,set4b$max_int,
+                         na.rm = TRUE)
+    
+  } else {
+
+    dz_tilde_min <- pmin(set1a$min_corner, set1b$max_corner,
+                         set2a$min_edge,set2b$max_edge,
+                         set3a$min_edge,set3b$max_edge,
+                         na.rm = TRUE)
+    
+    dz_tilde_max <- pmax(set1a$max_corner, set1b$max_corner,
+                         set2a$max_edge,set2b$max_edge,
+                         set3a$max_edge,set3b$max_edge,
+                         na.rm = TRUE)
+    
+  }
 
   data.frame(dz_tilde_min = dz_tilde_min, dz_tilde_max = dz_tilde_max)
   

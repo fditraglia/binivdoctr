@@ -222,7 +222,8 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
                           dTstar_tilde_range, a0bound = NULL, a1bound = NULL,
                           nRF = 500, nIS = 500,
-                          option = NULL){
+                          option = NULL,
+                          evaluateInterior){
 
   RFdraws <- drawObs(y_name, T_name, z_name, controls, data, nDraws = nRF)
   alpha_bounds <- t(sapply(1:nrow(RFdraws),
@@ -289,7 +290,9 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
     tempSlice$beta <- BBS * (obs$beta_iv - s_ze * obs$s_zT_upper)
     ISdraws[[i]] <- tempSlice
   }
-  return(list(IS = ISdraws, RF = RFdraws))
+  return(list(IS = ISdraws, RF = RFdraws,
+              dTstar_tilde_range = dTstar_tilde_range,
+              evaluateInterior = evaluateInterior))
 }
 
 #' Make draws for dTstar_tilde under the assumption that dz_tilde = 0

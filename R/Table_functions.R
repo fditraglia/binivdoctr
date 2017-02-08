@@ -29,10 +29,10 @@ make_tex_row <- function(char_vec, shift = 0) {
   return(out)
 }
 
-# ------------------------ Functions Specific to Continuous Case
+# ------------------------ Functions Specific to Binary Case
 make_I <- function(stats, example_name) {
   example_name <- paste(example_name, paste0('($n=', stats$n, '$)'))
-  est <- with(stats, sapply(c(b_OLS, b_IV, k_lower, r_uz_bound), format_est))
+  est <- with(stats, sapply(c(b_OLS, b_IV, a0_upper, a1_upper), format_est))
   est <- make_tex_row(c(example_name, est))
   se <- with(stats, sapply(c(se_OLS, se_IV), format_se))
   se <- make_tex_row(se, shift = 1)
@@ -40,21 +40,50 @@ make_I <- function(stats, example_name) {
 }
 
 make_II_III <- function(stats, prior_name) {
-  probs <- with(stats, sapply(c(p_empty, p_valid), format_est))
 
-  medians <- with(stats, sapply(c(beta_lower_median,
-                                  beta_upper_median,
-                                  r_uz_median,
-                                  beta_bayes_median), format_est))
+  if('dTstar_bayes' %in% rownames(stats)) {
+    medians <- c(format_est(stats['dTstar_lower', 'median']),
+                 format_est(stats['dTstar_upper', 'median']),
+                 format_est(stats['b_lower', 'median']),
+                 format_est(stats['b_upper', 'median']),
+                 format_est(stats['dTstar_bayes', 'median']),
+                 format_est(stats['b_bayes', 'median']))
 
-  HPDIs <- with(stats, apply(matrix(c(beta_lower_lower_bound, beta_lower_upper_bound,
-                                      beta_upper_lower_bound, beta_upper_upper_bound,
-                                      r_uz_lower_bound, r_uz_upper_bound,
-                                      beta_bayes_lower_bound, beta_bayes_upper_bound),
-                                    ncol = 2, byrow = TRUE), 1, format_HPDI))
+    HPDIs <- c(format_HPDI(stats['dTstar_lower', 'lower'],
+                           stats['dTstar_lower', 'upper']),
+               format_HPDI(stats['dTstar_upper', 'lower'],
+                           stats['dTstar_upper', 'upper']),
+               format_HPDI(stats['b_lower', 'lower'],
+                           stats['b_lower', 'upper']),
+               format_HPDI(stats['b_upper', 'lower'],
+                           stats['b_upper', 'upper']),
+               format_HPDI(stats['dTstar_bayes', 'lower'],
+                           stats['dTstar_bayes', 'upper']),
+               format_HPDI(stats['b_bayes', 'lower'],
+                           stats['b_bayes', 'upper']))
+  } else {
+    medians <- c(format_est(stats['dz_lower', 'median']),
+                 format_est(stats['dz_upper', 'median']),
+                 format_est(stats['b_lower', 'median']),
+                 format_est(stats['b_upper', 'median']),
+                 format_est(stats['dz_bayes', 'median']),
+                 format_est(stats['b_bayes', 'median']))
 
-  row1 <- paste('\\hspace{2em}', prior_name, make_tex_row(c(probs, medians), shift = 5))
-  row2 <- make_tex_row(HPDIs, shift = 7)
+    HPDIs <- c(format_HPDI(stats['dz_lower', 'lower'],
+                           stats['dz_lower', 'upper']),
+               format_HPDI(stats['dz_upper', 'lower'],
+                           stats['dz_upper', 'upper']),
+               format_HPDI(stats['b_lower', 'lower'],
+                           stats['b_lower', 'upper']),
+               format_HPDI(stats['b_upper', 'lower'],
+                           stats['b_upper', 'upper']),
+               format_HPDI(stats['dz_bayes', 'lower'],
+                           stats['dz_bayes', 'upper']),
+               format_HPDI(stats['b_bayes', 'lower'],
+                           stats['b_bayes', 'upper']))
+  }
+  row1 <- paste('\\hspace{2em}', prior_name, make_tex_row(medians, shift = 5))
+  row2 <- make_tex_row(HPDIs, shift = 5)
   paste(row1, row2, sep = '\n')
 }
 
@@ -76,73 +105,63 @@ make_II_III <- function(stats, prior_name) {
 #' @param example_name Character string describing the example
 #' @export
 makeExample <- function(y_name, T_name, z_name, data, controls = NULL,
-                        robust = FALSE, r_TstarU_restriction = NULL,
-                        k_restriction = NULL, n_draws = 5000, n_RF_draws = 1000,
+                        robust = FALSE,
+                        dTstar_tilde_range = NULL,
+                        dz_tilde_range = NULL,
+                        a0_restriction = NULL,
+                        a1_restriction = NULL,
+                        n_draws = 5000, n_RF_draws = 1000,
                         n_IS_draws = 1000, resample = FALSE, Jeffreys = FALSE,
                         example_name) {
-  if (is.null(r_TstarU_restriction)) {
-    r_TstarU_restriction <- matrix(c(-1, 1), nrow = 1)
-  }
-  if (is.null(k_restriction)) {
-    k_restriction <- matrix(c(0, 1), nrow = 1)
-  }
-  if (nrow(r_TstarU_restriction) != nrow(k_restriction)) {
-    if (is.null(r_TstarU_restriction)) {
-      r_TstarU_restriction <- matrix(c(-1, 1), nrow = nrow(k_restriction), byrow = TRUE)
-    } else if (is.null(k_restriction)) {
-      k_restriction <- matrix(c(0, 1), nrow = nrow(r_TstarU_restriction), byrow = TRUE)
-    } else {
-      stop("Dimension mismatch between r_TstarU_restriction and k_restriction.
-           Please make sure that if there are restrictions on kappa or r_TstarU
-           that they are of the same dimension so that all examples are accounted
-           for.")
-    }
-    }
-  summary_stats <- get_estimates(y_name, T_name, z_name, data, controls, robust)
-  obs <- get_observables(y_name, T_name, z_name, data, controls)
-  bounds_unrest <- get_bounds_unrest(obs)
 
-  stats_I <- list(n = summary_stats$n,
-                  b_OLS = summary_stats$b_OLS,
-                  se_OLS = summary_stats$se_OLS,
-                  b_IV = summary_stats$b_IV,
-                  se_IV = summary_stats$se_IV,
-                  k_lower = bounds_unrest$k$Lower,
-                  r_uz_bound = ifelse(abs(bounds_unrest$r_uz$Lower) == 1,
-                                      bounds_unrest$r_uz$Upper,
-                                      bounds_unrest$r_uz$Lower))
+  # if (is.null(r_TstarU_restriction)) {
+  #   r_TstarU_restriction <- matrix(c(-1, 1), nrow = 1)
+  # }
+  # if (is.null(k_restriction)) {
+  #   k_restriction <- matrix(c(0, 1), nrow = 1)
+  # }
+  # if (nrow(r_TstarU_restriction) != nrow(k_restriction)) {
+  #   if (is.null(r_TstarU_restriction)) {
+  #     r_TstarU_restriction <- matrix(c(-1, 1), nrow = nrow(k_restriction), byrow = TRUE)
+  #   } else if (is.null(k_restriction)) {
+  #     k_restriction <- matrix(c(0, 1), nrow = nrow(r_TstarU_restriction), byrow = TRUE)
+  #   } else {
+  #     stop("Dimension mismatch between r_TstarU_restriction and k_restriction.
+  #          Please make sure that if there are restrictions on kappa or r_TstarU
+  #          that they are of the same dimension so that all examples are accounted
+  #          for.")
+  #   }
+  #   }
+
+  ## NOTE: INCLUDE AN OPTION FOR WHETHER THE USER WANTS TO SPECIFY A VALID
+  ## INSTRUMENT OR NOT. IF THE ARGUMENT FOR BOUNDS ON DTSTAR_U. PROBABLY
+  ## BETTER TO INCLUDE THIS INSIDE THE
+
+  summary_stats <- get_summary_stats(y_name, T_name, z_name, data, controls,robust)
+  obs <- getObs(y_name, T_name, z_name, controls, data)
+
   headline <- make_I(stats_I, example_name)
-  nExamples <- nrow(r_TstarU_restriction)
+  nExamples <- nrow(dTstar_tilde_range)
   exampleTex <- NULL
+
   for (i in 1:nExamples) {
-    bounds <- draw_bounds(y_name, T_name, z_name, data, controls,
-                          r_TstarU_restriction[i, ], k_restriction[i, ],
-                          n_draws, Jeffreys)
-    freq <- summarize_bounds(bounds)
-    posterior <- draw_posterior(y_name, T_name, z_name, data, controls,
-                                r_TstarU_restriction[i, ], k_restriction[i, ],
-                                n_RF_draws, n_IS_draws, Jeffreys, resample)
-    bayes <- summarize_posterior(posterior)
-    stats <- list(p_empty = freq$p_empty,
-                  p_valid = freq$p_valid,
-                  beta_lower_median = freq$restricted$median[1],
-                  beta_upper_median = freq$restricted$median[2],
-                  beta_lower_lower_bound = freq$restricted$lower[1],
-                  beta_lower_upper_bound = freq$restricted$upper[1],
-                  beta_upper_lower_bound = freq$restricted$lower[2],
-                  beta_upper_upper_bound = freq$restricted$upper[2],
-                  r_uz_median = bayes$HPDI$median[1],
-                  beta_bayes_median = bayes$HPDI$median[2],
-                  r_uz_lower_bound = bayes$HPDI$lower[1],
-                  beta_bayes_lower_bound = bayes$HPDI$lower[2],
-                  r_uz_upper_bound = bayes$HPDI$upper[1],
-                  beta_bayes_upper_bound = bayes$HPDI$upper[2])
+
+    draws <- draw_dTstar_tilde_valid(y_name, T_name, z_name, controls,
+                                     data, a0bound, a1bound,
+                                     nRF = n_RF_draws, nIS = n_IS_draws)
+
+    bayes <-  summarize_dz_draws(draws)
+
+    ## Introduce conditionals on what information to report.
+
     newRow <- make_II_III(stats, paste0("$(\\kappa, \\rho_{T^*u}) \\in (",
                                         k_restriction[i, 1], ",",
                                         k_restriction[i, 2],
                                         ") \\times [",
                                         r_TstarU_restriction[i, 1], ",",
                                         r_TstarU_restriction[i, 2], "]"))
+
+
     exampleTex <- paste(exampleTex, newRow, sep = "/n")
   }
   output <- paste(headline, exampleTex, sep = "/n")
