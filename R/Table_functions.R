@@ -128,7 +128,8 @@ makeExample <- function(y_name, T_name, z_name, data, controls = NULL,
                     n_IS_draws = n_IS_draws,
                     resample = resample,
                     Jeffreys = Jeffreys,
-                    example_name = example_name)
+                    example_name = example_name,
+                    evaluateInterior = evaluateInterior)
   
   # Obtain summary statistics
                     
