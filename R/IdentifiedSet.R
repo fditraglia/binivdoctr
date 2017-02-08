@@ -77,9 +77,9 @@ getObs <- function(y_name, T_name, z_name, controls = NULL, data){
     obs$C1 <- obs$C2 <- obs$C3 <- obs$C4 <- 0
 
     s_zT_upper <- 1 / cov(z, Tobs)
-    yb1 <- (1 - p1) * yb01 + p1 * yb11
-    yb0 <- (1 - p0) * yb00 + p0 * yb10
-    beta_iv <- (yb1 - yb0) / (p1 - p0)
+    yb1 <- with(obs,(1 - p1) * yb01 + p1 * yb11)
+    yb0 <- with(obs,(1 - p0) * yb00 + p0 * yb10)
+    beta_iv <- with(obs,(yb1 - yb0) / (p1 - p0))
 
     obs$beta_iv <- beta_iv
     obs$s_zT_upper <- s_zT_upper

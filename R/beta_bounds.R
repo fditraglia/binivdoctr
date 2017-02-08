@@ -135,42 +135,49 @@ candidate2_beta <- function(dTstar_tilde_bound, a0,
 
   solve_foc <- function(obs) {
 
-    #obs <- as.list(as.data.frame(obs_df)[44,])
     obs <- as.list(obs)
-
-    gradient_fn <- function(a1) {
-
-      gradient_beta <- foc_beta_a1(dTstar_tilde_bound,
-                                   with(obs,a0_edge),a1,
-                                   obs)
-      return(gradient_beta)
-
-    }
-
-    a1_roots <- uniroot.all(gradient_fn,interval=c(0,with(obs,a1_upper_bound)))
-
-    valid_roots <- matrix(NA,length(a1_roots),2)
-    valid_roots[,1] <- with(obs,a0_edge)
-    valid_roots[,2] <- a1_roots
-
-    if(length(valid_roots) != 0) {
-
-      value <- apply(valid_roots,1,
-                     function(a) get_beta(dTstar_tilde_bound,
-                                          a[1],a[2],obs))
-
-      min_int <- min(t(value), na.rm = TRUE)
-      max_int <- max(t(value), na.rm = TRUE)
-
+        
+    if(with(obs,a1_upper_bound) == 0) {
+      
+      return(c(NA,NA))
+      
     } else {
 
-      min_int <- NA
-      max_int <- NA
+      #obs <- as.list(as.data.frame(obs_df)[44,])
 
+      gradient_fn <- function(a1) {
+  
+        gradient_beta <- foc_beta_a1(dTstar_tilde_bound,
+                                     with(obs,a0_edge),a1,
+                                     obs)
+        return(gradient_beta)
+  
+      }
+      
+      a1_roots <- uniroot.all(gradient_fn,interval=c(0,with(obs,a1_upper_bound)))
+  
+      valid_roots <- matrix(NA,length(a1_roots),2)
+      valid_roots[,1] <- with(obs,a0_edge)
+      valid_roots[,2] <- a1_roots
+  
+      if(length(valid_roots) != 0) {
+  
+        value <- apply(valid_roots,1,
+                       function(a) get_beta(dTstar_tilde_bound,
+                                            a[1],a[2],obs))
+  
+        min_int <- min(t(value), na.rm = TRUE)
+        max_int <- max(t(value), na.rm = TRUE)
+  
+      } else {
+  
+        min_int <- NA
+        max_int <- NA
+  
+      }
+  
+      return(c(min_int,max_int)) # rbind(obs$p,obs$q)
     }
-
-    return(c(min_int,max_int)) # rbind(obs$p,obs$q)
-
   }
 
   results <- t(apply(as.data.frame(obs),1,solve_foc))
@@ -191,41 +198,47 @@ candidate3_beta <- function(dTstar_tilde_bound, a1,
 
   solve_foc <- function(obs) {
 
-    #obs <- as.list(as.data.frame(obs_df)[44,])
     obs <- as.list(obs)
-
-    gradient_fn <- function(a0) {
-
-      gradient_beta <- foc_beta_a0(dTstar_tilde_bound,a0,
-                                   with(obs,a1_edge),obs)
-      return(gradient_beta)
-
-    }
-
-    a0_roots <- uniroot.all(gradient_fn,interval=c(0,with(obs,a0_upper_bound)))
-
-    valid_roots <- matrix(NA,length(a0_roots),2)
-    valid_roots[,1] <- a0_roots
-    valid_roots[,2] <- with(obs,a1_edge)
-
-    if(length(valid_roots) != 0) {
-
-      value <- apply(valid_roots,1,
-                     function(a) get_beta(dTstar_tilde_bound,
-                                          a[1],a[2],obs))
-
-      min_int <- min(t(value), na.rm = TRUE)
-      max_int <- max(t(value), na.rm = TRUE)
-
+    
+    if(with(obs,a0_upper_bound) == 0) {
+      return(c(NA,NA))      
     } else {
-
-      min_int <- NA
-      max_int <- NA
-
+      
+      #obs <- as.list(as.data.frame(obs_df)[44,])
+  
+      gradient_fn <- function(a0) {
+  
+        gradient_beta <- foc_beta_a0(dTstar_tilde_bound,a0,
+                                     with(obs,a1_edge),obs)
+        return(gradient_beta)
+  
+      }
+  
+      a0_roots <- uniroot.all(gradient_fn,interval=c(0,with(obs,a0_upper_bound)))
+  
+      valid_roots <- matrix(NA,length(a0_roots),2)
+      valid_roots[,1] <- a0_roots
+      valid_roots[,2] <- with(obs,a1_edge)
+  
+      if(length(valid_roots) != 0) {
+  
+        value <- apply(valid_roots,1,
+                       function(a) get_beta(dTstar_tilde_bound,
+                                            a[1],a[2],obs))
+  
+        min_int <- min(t(value), na.rm = TRUE)
+        max_int <- max(t(value), na.rm = TRUE)
+  
+      } else {
+  
+        min_int <- NA
+        max_int <- NA
+  
+      }
+  
+      return(c(min_int,max_int)) # rbind(obs$p,obs$q)
+      
     }
-
-    return(c(min_int,max_int)) # rbind(obs$p,obs$q)
-
   }
 
   results <- t(apply(as.data.frame(obs),1,solve_foc))
@@ -245,61 +258,68 @@ candidate4_beta <- function(dTstar_tilde_bound,
 
   solve_foc <- function(obs) {
 
-    #obs <- as.list(as.data.frame(obs_df)[44,])
     obs <- as.list(obs)
-
-    gradient_fn <- function(a) {
-
-      a0 <- a[1]
-      a1 <- a[2]
-
-      gradient_beta <- cbind(foc_beta_a0(dTstar_tilde_bound,a0,a1,obs),
-                             foc_beta_a1(dTstar_tilde_bound,a0,a1,obs))
-      return(gradient_beta)
-
-    }
-
-    # gradient_fn(a)
-
-    # Use a grid of initial guesses in the identified set (currently only one)
-    initial_guess <- expand.grid(seq(with(obs,a0_upper_bound)*(1/2),
-                                     with(obs,a0_upper_bound)*(1/2),
-                                     length.out = 1),
-                                 seq(with(obs,a1_upper_bound)*(1/2),
-                                     with(obs,a1_upper_bound)*(1/2),
-                                     length.out = 2))
-
-    result <- searchZeros(as.matrix(initial_guess),gradient_fn)
-    valid_roots <- result$x[(result$x[,1]>=0) &
-                              (result$x[,1]<=with(obs,a0_upper_bound)) &
-                              (result$x[,2]>=0) &
-                              (result$x[,2]<=with(obs,a1_upper_bound)),]
-
-    if(length(valid_roots) != 0) {
-
-      if(length(valid_roots == 2)) {
-        value <- apply(t(as.matrix(valid_roots)),1,
-                       function(a) get_beta(dTstar_tilde_bound,
-                                            a[1],a[2],obs))
-      } else {
-        value <- apply(as.matrix(valid_roots),1,
-                       function(a) get_beta(dTstar_tilde_bound,
-                                            a[1],a[2],obs))
-      }
-
-
-      min_int <- min(t(value), na.rm = TRUE)
-      max_int <- max(t(value), na.rm = TRUE)
-
+        
+    if(with(obs,a0_upper_bound) == 0 | with(obs,a1_upper_bound) == 0) {
+      return(c(NA,NA))
     } else {
+      
+      #obs <- as.list(as.data.frame(obs_df)[44,])
 
-      min_int <- NA
-      max_int <- NA
-
+  
+      gradient_fn <- function(a) {
+  
+        a0 <- a[1]
+        a1 <- a[2]
+  
+        gradient_beta <- cbind(foc_beta_a0(dTstar_tilde_bound,a0,a1,obs),
+                               foc_beta_a1(dTstar_tilde_bound,a0,a1,obs))
+        return(gradient_beta)
+  
+      }
+  
+      # gradient_fn(a)
+  
+      # Use a grid of initial guesses in the identified set (currently only one)
+      initial_guess <- expand.grid(seq(with(obs,a0_upper_bound)*(1/2),
+                                       with(obs,a0_upper_bound)*(1/2),
+                                       length.out = 1),
+                                   seq(with(obs,a1_upper_bound)*(1/2),
+                                       with(obs,a1_upper_bound)*(1/2),
+                                       length.out = 2))
+  
+      result <- searchZeros(as.matrix(initial_guess),gradient_fn)
+      valid_roots <- result$x[(result$x[,1]>=0) &
+                                (result$x[,1]<=with(obs,a0_upper_bound)) &
+                                (result$x[,2]>=0) &
+                                (result$x[,2]<=with(obs,a1_upper_bound)),]
+  
+      if(length(valid_roots) != 0) {
+  
+        if(length(valid_roots == 2)) {
+          value <- apply(t(as.matrix(valid_roots)),1,
+                         function(a) get_beta(dTstar_tilde_bound,
+                                              a[1],a[2],obs))
+        } else {
+          value <- apply(as.matrix(valid_roots),1,
+                         function(a) get_beta(dTstar_tilde_bound,
+                                              a[1],a[2],obs))
+        }
+  
+  
+        min_int <- min(t(value), na.rm = TRUE)
+        max_int <- max(t(value), na.rm = TRUE)
+  
+      } else {
+  
+        min_int <- NA
+        max_int <- NA
+  
+      }
+  
+      return(c(min_int,max_int)) # rbind(obs$p,obs$q)
+      
     }
-
-    return(c(min_int,max_int)) # rbind(obs$p,obs$q)
-
   }
 
   # ptm <- proc.time()

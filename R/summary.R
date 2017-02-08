@@ -12,7 +12,7 @@
 #'
 #' @examples
 get_summary_stats <- function(y_name, T_name, z_name, data, controls = NULL,
-                          robust = FALSE) {
+                          robust = FALSE,...) {
   first_stage <- reformulate(c(z_name, controls), response = NULL)
   second_stage <- reformulate(c(T_name, controls), response = y_name)
   OLS <- lm(second_stage, data)
@@ -82,8 +82,8 @@ summarize_dz_draws <- function(draws){
   b_lower <- pmin(b_bounds_analyt[,1],b_bounds_sim[,1],na.rm=TRUE)
   b_upper <- pmax(b_bounds_analyt[,2],b_bounds_sim[,2],na.rm=TRUE)
   
-  b_lower <- b_bounds_analyt[,1]
-  b_upper <- b_bounds_analyt[,2]
+  # b_lower <- b_bounds_analyt[,1]
+  # b_upper <- b_bounds_analyt[,2]
   
   #dz_bounds <- t(sapply(draws$IS, function(x) range(x$dz_tilde)))
   dz_bounds_analyt <- get_dz_tilde_bounds(draws$dTstar_tilde_range[1],

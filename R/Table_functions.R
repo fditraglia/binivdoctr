@@ -15,8 +15,8 @@ format_est <- function(est) {
 format_se <- function(se) {
   paste0('$(', myformat(se), ')$')
 }
-format_HPDI <- function(bounds) {
-  paste0('$[', myformat(bounds[1]), ',', myformat(bounds[2]), ']$')
+format_HPDI <- function(lower, upper) {
+  paste0('$[', myformat(lower), ',', myformat(upper), ']$')
 }
 
 make_tex_row <- function(char_vec, shift = 0) {
@@ -95,8 +95,10 @@ make_II_III <- function(stats, prior_name) {
 #' @param data Data frame
 #' @param controls Vector of character strings specifying the exogenous variables
 #' @param robust Indicator for heteroskedasticity-robust standard errors
-#' @param r_TstarU_restriction Matrix of desired mins and maxes for r_TstarU (must be same dimensions as k_restriction)
-#' @param k_restriction Matrix of desired minx and maxes for kappa (must be same dimensions as r_TstarU_restriction)
+#' @param dTstar_tilde_range Matrix of desired mins and maxes for dTstar_tilde_range (must be same dimensions as k_restriction)
+#' @param dz_tilde_range Matrix of desired mins and maxes for dTstar_tilde_range (must be same dimensions as r_TstarU_restriction)
+#' @param a0bound 
+#' @param a1bound 
 #' @param n_draws Number of draws when generating frequentist-friendly draws of the covariance matrix
 #' @param n_RF_draws Number of reduced-form draws
 #' @param n_IS_draws Number of draws on the identified set
@@ -105,65 +107,233 @@ make_II_III <- function(stats, prior_name) {
 #' @param example_name Character string describing the example
 #' @export
 makeExample <- function(y_name, T_name, z_name, data, controls = NULL,
-                        robust = FALSE,
                         dTstar_tilde_range = NULL,
                         dz_tilde_range = NULL,
-                        a0_restriction = NULL,
-                        a1_restriction = NULL,
+                        a0bound= NULL, a1bound = NULL,
                         n_draws = 5000, n_RF_draws = 1000,
                         n_IS_draws = 1000, resample = FALSE, Jeffreys = FALSE,
-                        example_name) {
+                        example_name,
+                        option,
+                        evaluateInterior=FALSE) {
 
-  # if (is.null(r_TstarU_restriction)) {
-  #   r_TstarU_restriction <- matrix(c(-1, 1), nrow = 1)
-  # }
-  # if (is.null(k_restriction)) {
-  #   k_restriction <- matrix(c(0, 1), nrow = 1)
-  # }
-  # if (nrow(r_TstarU_restriction) != nrow(k_restriction)) {
-  #   if (is.null(r_TstarU_restriction)) {
-  #     r_TstarU_restriction <- matrix(c(-1, 1), nrow = nrow(k_restriction), byrow = TRUE)
-  #   } else if (is.null(k_restriction)) {
-  #     k_restriction <- matrix(c(0, 1), nrow = nrow(r_TstarU_restriction), byrow = TRUE)
-  #   } else {
-  #     stop("Dimension mismatch between r_TstarU_restriction and k_restriction.
-  #          Please make sure that if there are restrictions on kappa or r_TstarU
-  #          that they are of the same dimension so that all examples are accounted
-  #          for.")
-  #   }
-  #   }
+  # Baseline table object
 
-  ## NOTE: INCLUDE AN OPTION FOR WHETHER THE USER WANTS TO SPECIFY A VALID
-  ## INSTRUMENT OR NOT. IF THE ARGUMENT FOR BOUNDS ON DTSTAR_U. PROBABLY
-  ## BETTER TO INCLUDE THIS INSIDE THE
+  table_obj <- list(y_name = y_name,
+                    T_name = T_name,
+                    z_name = z_name,
+                    data = data,
+                    controls = controls,
+                    n_draws = n_draws,
+                    n_RF_draws = n_RF_draws,
+                    n_IS_draws = n_IS_draws,
+                    resample = resample,
+                    Jeffreys = Jeffreys,
+                    example_name = example_name)
+  
+  # Obtain summary statistics
+                    
+  summary_stats <- do.call(get_summary_stats, table_obj)
+  headline <- make_I(summary_stats, example_name)
 
-  summary_stats <- get_summary_stats(y_name, T_name, z_name, data, controls,robust)
-  obs <- getObs(y_name, T_name, z_name, controls, data)
-
-  headline <- make_I(stats_I, example_name)
   nExamples <- nrow(dTstar_tilde_range)
   exampleTex <- NULL
-
+  
   for (i in 1:nExamples) {
 
-    draws <- draw_dTstar_tilde_valid(y_name, T_name, z_name, controls,
-                                     data, a0bound, a1bound,
-                                     nRF = n_RF_draws, nIS = n_IS_draws)
+    ## Define appropriate labels
+    
+    print(i)
+    
+    text_PequalPstar <- ""
+    text_A0equalA1 <- ""      
+    text_a0bound <- ""
+    text_a1bound <- ""
+    option_default <- NULL
+    
+    if(length(option) >= i) {
 
-    bayes <-  summarize_dz_draws(draws)
+      print("here we go")
+      print(option[i])
+      
+      if(!is.na(option[i])) {
+        
+        if(option[i] == "PequalPstar") {
+          
+          text_PequalPstar <- c("$\\;p=p^*$")
+          
+        } else if (option[i] == "A0equalA1") {
+          
+          text_A0equalA1 <- c("$\\;\\alpha_0=\\alpha_1$")        
+          
+        }
+        
+      } else {
+        
+        option_default <- option[i]
+        
+      }
+  
+    }
+    
+    if( length(a0bound) >= i) {
+      
+      if( a0bound[i] == 0 ) {
+        text_a0bound <- "$\\;\\alpha_0 = 0$"
+      } else if(a0bound[i] < 1 ){
+        text_a0bound <- paste0("$\\;\\alpha_0 < $",a0bound[i])          
+      }
+    }
+    
+    if( length(a1bound) >= i ) {
+      
+      if( a1bound[i] == 0 ) {
+        text_a1bound <- "$\\;\\alpha_1 = 0$"
+      } else if( a1bound[i] < 1 ) {
+        text_a1bound <- paste0("$\\;\\alpha_1 < $",a1bound[i])          
+      }
+    }
+    
+    ## Obtain summary statistics
+
+    temp_table_obj <- c(table_obj,
+                        list(dTstar_tilde_range = dTstar_tilde_range[i,],
+                             a0bound = a0bound[i],
+                             a1bound = a1bound[i],
+                             option = option[i]))
+            
+    if(!is.na(dTstar_tilde_range[i,1])) {
+      
+      temp_summary <- summarize_dz_draws(do.call(draw_dz_tilde, temp_table_obj))
+
+      newRow <- make_II_III(temp_summary, paste0("$\\delta_{T^*} \\in [",
+                                          dTstar_tilde_range[i,1],
+                                          ",",
+                                          dTstar_tilde_range[i,2],
+                                          "]$",
+                                          text_a0bound,text_a1bound,
+                                          text_PequalPstar,text_A0equalA1))
+                            
+    } else {
+
+      temp_summary <- summarize_dTstar_draws(do.call(draw_dTstar_tilde_valid,
+                                                     temp_table_obj))
+
+      newRow <- make_II_III(temp_summary, paste0("$\\delta_z=0$",
+                                          text_a0bound,text_a1bound))
+    }
 
     ## Introduce conditionals on what information to report.
-
-    newRow <- make_II_III(stats, paste0("$(\\kappa, \\rho_{T^*u}) \\in (",
-                                        k_restriction[i, 1], ",",
-                                        k_restriction[i, 2],
-                                        ") \\times [",
-                                        r_TstarU_restriction[i, 1], ",",
-                                        r_TstarU_restriction[i, 2], "]"))
-
-
-    exampleTex <- paste(exampleTex, newRow, sep = "/n")
+    
+    exampleTex <- paste(exampleTex, newRow, sep = "")
   }
-  output <- paste(headline, exampleTex, sep = "/n")
+  output <- paste(headline, exampleTex, sep = "")
   return(output)
-    }
+}
+
+# verifiyArguments <- function(y_name, T_name, z_name, data, controls = NULL,
+#                              robust = FALSE,
+#                              dTstar_tilde_range = NULL,
+#                              dz_tilde_range = NULL,
+#                              a0bound= NULL, a1bound = NULL,
+#                              n_draws = 5000, n_RF_draws = 1000,
+#                              n_IS_draws = 1000, resample = FALSE, Jeffreys = FALSE,
+#                              example_name,
+#                              option) {
+# 
+#   if (is.null(dTstar_tilde_range) & is.null(dz_tilde_range)) {
+#     stop("Execution was stopped because no argument was entered
+#          for dTstar_tilde_range or dz_tilde_range.
+#          Please specify a range.")  
+#   } else if (is.null(dTstar_tilde_range) & !is.null(dz_tilde_range))  {
+#     
+#     if(dim(dTstar_tilde_range)[2] > 3 ){
+#       
+#       stop("Execution was stopped because dTstar_tilde_range has 3 or more
+#            columns. dTstar_tilde_range range should be a Mx2 matrix, where
+#            M is the number of priors being evaluated.") 
+#     }
+#     
+#     if( is.null(a0bound) ) {
+#       a0bound <- matrix(c(1),nrow=dim(dTstar_tilde_range)[1])
+#       
+#     } else if(dim(a0bound)[2] != 1) {
+#       stop("Execution was stopped because a0bound is not a vector")
+#       
+#     } else if(dim(a0bound)[1] != dim(dim(dTstar_tilde_range)[1])) {
+#       
+#       stop("Execution was stopped because dTstar_tilde_range and a0 bound
+#            do not have the same number of rows.")      
+#       
+#     }
+#     
+#     if( is.null(a1bound) ) {
+#       a1bound <- matrix(c(1),nrow=dim(dTstar_tilde_range)[1])
+#       
+#     } else if(dim(a1bound)[2] != 1) {
+#       stop("Execution was stopped because a1bound is not a vector")
+#       
+#     } else if(dim(a1bound)[1] != dim(dim(dTstar_tilde_range)[1])) {
+#       
+#       stop("Execution was stopped because dTstar_tilde_range and a1 bound
+#            do not have the same number of rows.")      
+#       
+#     }
+#     
+#     
+#     } else if (!is.null(dTstar_tilde_range) & is.null(dz_tilde_range))  {
+#       
+#       
+#     } else {
+#       
+#       
+#       
+#     }
+#   is.null(dTstar_tilde_range) & is.null(dz_tilde_range)
+#   
+#   
+#   
+#   
+#   
+#     }
+#     
+# }
+
+table_header_fn <- function(){
+  
+  table_header <- '\\begin{tabular}{lcccccccccc}
+                 \\hline \\hline
+  &\\multicolumn{4}{c}{(I) Summary Statistics}
+  &\\multicolumn{4}{c}{(II) Frequentist-Friendly}
+  &\\multicolumn{2}{c}{(III) Fully Bayesian} \\\\
+  \\cmidrule(lr){2-5}\\cmidrule(lr){6-9}\\cmidrule(lr){10-11}
+  & OLS & IV & $\\bar{\\alpha}_0$ & $\\bar{\\alpha}_1$
+  & $\\underline{\\delta}_{T^*/z}$ & $\\bar{\\delta}_{T^*/z}$
+  & $\\underline{\\beta}$ & $\\bar{\\beta}$
+  & $\\delta_{T^*/z}$ & $\\beta$ \\\\'
+  
+}
+
+table_footer_fn <- function() {
+  
+  table_footer <- '\\hline
+  \\end{tabular}'
+  
+}
+
+makeTable <- function(file,...) {
+  
+  table_examples <- c()
+  list_examples <- list(...)
+  
+  for( i in 1:length(list(...))) {
+    
+   table_examples <- c(table_examples,list_examples[[i]],"\\\\")
+    
+  }
+  
+  cat(table_header_fn(),'\\\\',
+      table_examples,
+      table_footer_fn(),
+      sep = '\n',file=file)
+
+}
