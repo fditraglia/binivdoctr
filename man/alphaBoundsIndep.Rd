@@ -25,4 +25,3 @@ List with upper bounds for a0 and a1
 \description{
 Calculate upper bounds for a0 and a1 based on independence assumption
 }
-

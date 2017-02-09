@@ -6,7 +6,7 @@
 \usage{
 draw_dz_tilde(y_name, T_name, z_name, controls = NULL, data,
   dTstar_tilde_range, a0bound = NULL, a1bound = NULL, nRF = 500,
-  nIS = 500, option = NULL)
+  nIS = 500, option = NULL, evaluateInterior = FALSE, ...)
 }
 \arguments{
 \item{PequalPstar}{}
@@ -22,4 +22,3 @@ foo <- draw_dz_tilde(y_name = "testscore", T_name = "enrolled",
                      z_name = "buildschool", controls = afghanControls,
                      data = afghan, dTstar_tilde_range = c(0, 1))
 }
-

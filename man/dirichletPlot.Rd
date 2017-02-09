@@ -12,4 +12,3 @@ dirichletPlot(scale, inc = 0.005)
 \description{
 Heatmap Plot for Dirichlet Density
 }
-

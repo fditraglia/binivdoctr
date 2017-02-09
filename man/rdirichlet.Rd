@@ -12,4 +12,3 @@ rdirichlet(n, shape)
 \description{
 Random draws from a Dirichlet Distribution
 }
-

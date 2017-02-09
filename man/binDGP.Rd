@@ -27,4 +27,3 @@ Samples from model
 \description{
 Simulation DGP for binary example with independent instrument
 }
-

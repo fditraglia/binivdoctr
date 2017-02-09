@@ -21,4 +21,3 @@ Value of instrument endogeneity implied by the data and specified values of regr
 \description{
 Calculate endogeneity of binary instrument
 }
-

@@ -5,7 +5,7 @@
 \title{Title}
 \usage{
 get_summary_stats(y_name, T_name, z_name, data, controls = NULL,
-  robust = FALSE)
+  robust = FALSE, ...)
 }
 \arguments{
 \item{robust}{}
@@ -13,4 +13,3 @@ get_summary_stats(y_name, T_name, z_name, data, controls = NULL,
 \description{
 Title
 }
-
