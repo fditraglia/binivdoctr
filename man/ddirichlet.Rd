@@ -12,4 +12,3 @@ ddirichlet(x, shape, log.ret = FALSE)
 \description{
 Dirichlet Density Function
 }
-

@@ -15,4 +15,3 @@ Dataframe, each row of which is one draw for the reduced form parameters with co
 \description{
 Make draws of reduced form parameters
 }
-

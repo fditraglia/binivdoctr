@@ -23,4 +23,3 @@ Description of the dataset goes here.
 \url{http://www.jstor.org/stable/41408731}
 }
 \keyword{datasets}
-

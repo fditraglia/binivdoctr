@@ -271,7 +271,7 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
           a0 <- a1
         }
       }else {
-        print(option[i])
+        #print(option[i])
         stop("Invalid option specified.")
       }
     }else{

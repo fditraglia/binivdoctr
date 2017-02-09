@@ -12,4 +12,3 @@ getMomentsForSampler(y_name, T_name, z_name, controls = NULL, data)
 \description{
 Get moments for sampling reduced-form parameters
 }
-

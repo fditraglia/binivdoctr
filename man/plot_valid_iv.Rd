@@ -14,4 +14,3 @@ plot_valid_iv(obs, alpha_grid = 0.01, theta = 0, phi = 15,
 \description{
 Valid IV plot
 }
-

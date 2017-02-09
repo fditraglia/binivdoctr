@@ -19,4 +19,3 @@ Make plot of bounds on a0 and a1
 \description{
 Make plot of bounds on a0 and a1 implied by observable CDFs
 }
-

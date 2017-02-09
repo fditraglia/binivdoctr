@@ -12,4 +12,3 @@ get_HPDI(draws, level = 0.9)
 \description{
 Title
 }
-

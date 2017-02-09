@@ -23,4 +23,3 @@ Description of the dataset goes here.
 \url{http://economics.mit.edu/faculty/angrist/data1/data/angetal02}
 }
 \keyword{datasets}
-

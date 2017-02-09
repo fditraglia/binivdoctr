@@ -36,4 +36,3 @@ and K (assignment of observations to clusters).
 \description{
 Gibbs sampler for Dirichlet Process Mixture of Normals
 }
-
