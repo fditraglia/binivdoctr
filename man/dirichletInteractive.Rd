@@ -9,4 +9,3 @@ dirichletInteractive()
 \description{
 Interactive Heatmap for Dirichlet Density
 }
-

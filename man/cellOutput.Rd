@@ -19,4 +19,3 @@ Reduced form draws after removing "inactive" clusters
 \description{
 Generate reduced form draws for particular (Tobs, Z) cell
 }
-

@@ -15,4 +15,3 @@ List of lists with values for non-empty clusters
 \description{
 Process results of drawDPM to drop empty clusters
 }
-

@@ -14,4 +14,3 @@ plot_fixed_dTstar(obs, dTstar, alpha_grid = 0.005, theta = 0, phi = 15,
 \description{
 Fixed dTstar plot
 }
-

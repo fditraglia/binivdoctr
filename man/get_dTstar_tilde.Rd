@@ -22,4 +22,3 @@ instrument invalidity and mis-classification probabilities.
 \description{
 Calculate endogeneity of binary regressor
 }
-

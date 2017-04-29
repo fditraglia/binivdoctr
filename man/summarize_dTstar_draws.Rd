@@ -12,4 +12,3 @@ summarize_dTstar_draws(draws)
 \description{
 Title
 }
-

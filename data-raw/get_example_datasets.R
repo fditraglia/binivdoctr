@@ -1,80 +1,15 @@
 # ======================================================================
-# Dinkelman (2011, AER) - Effects of Rural Electrification on Employment
-# Based on the data used to construct Table 4 of the paper
-# ======================================================================
-download.file("https://www.aeaweb.org/aer/data/dec2011/20080791_data.zip",
-              "./data-raw/dinkelman.zip")
-unzip("./data-raw/dinkelman.zip",
-      files = "20080791_dataset/data/matched_censusdata.dta",
-      exdir = "./data-raw", junkpaths = TRUE)
-dinkelman <- haven::read_dta("./data-raw/matched_censusdata.dta")
-system("rm ./data-raw/dinkelman.zip")
-
-# Restrict to areas with at least 100 adults in both years
-dinkelman <- subset(dinkelman, largeareas == 1)
-
-keep <- c(# Treatment
-          "T", # ESKOM (electrification) Project? (Dummy)
-          # Outcomes
-          "d_prop_emp_f", # Change in female employment rate
-          "d_prop_emp_m", # Change in male employment rate
-          # Instrument
-          "mean_grad_new", # Land gradient
-          # Fixed Effects
-          "dccode0", # District index (factor)
-          # Controls
-          "kms_to_subs0",
-          "baseline_hhdens0",
-          "base_hhpovrate0",
-          "prop_head_f_a0",
-          "sexratio0_a",
-          "prop_indianwhite0",
-          "kms_to_road0",
-          "kms_to_town0",
-          "prop_matric_m0",
-          "prop_matric_f0",
-          "d_prop_waterclose",
-          "d_prop_flush")
-dinkelman <- dinkelman[, keep]
-rm(keep)
-
-# Rename "T" to escom so it doesn't clash with "TRUE"
-names(dinkelman)[which(names((dinkelman)) == "T")] <- "escom"
-
-# Rescale certain variables to match magnitudes in paper
-rescale <- c("mean_grad_new", "kms_to_subs0", "baseline_hhdens0",
-             "kms_to_road0", "kms_to_town0")
-dinkelman[,rescale] <- dinkelman[,rescale] / 10
-rm(rescale)
-
-# Create binary version of instrument
-dinkelman$steep <- (dinkelman$mean_grad_new > 1) # use 1 as cutoff ~= median and FAO's def of strongly sloping
-
-# Replace dccode0 (a factor for district) with a group of dummy variables that
-# represent the same information, treating F21 as the "baseline"
-district <- as.factor(dinkelman$dccode0)
-dinkelman$dccode0 <- NULL
-dummies <- model.matrix(~ district)
-dummies <- dummies[,-1]
-dinkelman <- cbind(dinkelman, dummies)
-rm(district, dummies)
-
-devtools::use_data(dinkelman, overwrite = TRUE)
-rm(dinkelman)
-
-
-# ======================================================================
 # Angrist et al (2002, AER) - Vouchers for Private Schooling
 # Data needed to replicate selected results from Table 7
 # ======================================================================
-download.file("http://economics.mit.edu/files/1395", "./data-raw/tab7.sas7bdat")
-angrist <- haven::read_sas("./data-raw/tab7.sas7bdat")
+download.file("http://economics.mit.edu/files/1395", "./data/tab7.sas7bdat")
+angrist <- haven::read_sas("./data/tab7.sas7bdat")
 
 # Convert variable names to lowercase
 names(angrist) <- tolower(names(angrist))
 
 # Construct highest grade completed outcome
-grades <- angrist[,c("finish6", "finish7", "finish8")]
+grades <- angrist[, c("finish6", "finish7", "finish8")]
 g <- function(x){
   out <- 5
   if(all(x == c(1, 0, 0)))
@@ -85,20 +20,18 @@ g <- function(x){
     out <- 8
   return(out)
 }
-highestGrade <- apply(grades, 1, g)
-angrist$highestGrade <- highestGrade
-rm(grades, highestGrade, g)
+angrist$highestGrade <- apply(grades, 1, g)
+rm(grades, g)
 
 # Construct total repetitions outcome
-rept <- angrist[,c("rept6", "rept7", "rept8")]
+rept <- angrist[, c("rept6", "rept7", "rept8")]
 f <- function(x){
   x[2] <- x[2] - 1
   x[3] <- x[3] - 1
   return(sum(x, na.rm = TRUE))
 }
-totalRepeats <- apply(rept, 1, f)
-angrist$totalRepeats <- totalRepeats
-rm(totalRepeats, f, rept)
+angrist$totalRepeats <- apply(rept, 1, f)
+rm(f, rept)
 
 # In their SAS file, Angrist et al restrict their sample using the following
 # condition, on which they do not comment in either the paper or the code.
@@ -115,7 +48,7 @@ keepObs <- with(angrist, !is.na(scyfnsh) & !is.na(finish6) & !is.na(rept6) &
                   !is.na(totscyrs) & !is.na(rept) &
                   ((bog95smp == 1) | (bog97smp == 1) | (jam93smp == 1)))
 
-angrist <- angrist[keepObs,]
+angrist <- angrist[keepObs, ]
 rm(keepObs)
 
 # Note that we do not include some of the Dummies mentioned by Angrist et al.
@@ -131,7 +64,7 @@ rm(keepObs)
 # lm function when it runs the OLS, reduced form, and first stage regressions.
 
 keepVars <- c(
-# Covariates
+  # Covariates
   "age", # The only covariate that isn't a dummy
   "svy",
   "hsvisit",
@@ -183,14 +116,80 @@ rm(keepVars)
 
 devtools::use_data(angrist, overwrite = TRUE)
 rm(angrist)
+system("rm ./data/tab7.sas7bdat")
+
+# ======================================================================
+# Dinkelman (2011, AER) - Effects of Rural Electrification on Employment
+# Based on the data used to construct Table 4 of the paper
+# ======================================================================
+download.file("https://www.aeaweb.org/aer/data/dec2011/20080791_data.zip",
+              "./data/dinkelman.zip")
+unzip("./data/dinkelman.zip",
+      files = "20080791_dataset/data/matched_censusdata.dta",
+      exdir = "./data", junkpaths = TRUE)
+dinkelman <- haven::read_dta("./data/matched_censusdata.dta")
+system("rm ./data/dinkelman.zip")
+
+# Restrict to areas with at least 100 adults in both years
+dinkelman <- subset(dinkelman, largeareas == 1)
+
+keep <- c(# Treatment
+  "T", # ESKOM (electrification) Project? (Dummy)
+  # Outcomes
+  "d_prop_emp_f", # Change in female employment rate
+  "d_prop_emp_m", # Change in male employment rate
+  # Instrument
+  "mean_grad_new", # Land gradient
+  # Fixed Effects
+  "dccode0", # District index (factor)
+  # Controls
+  "kms_to_subs0",
+  "baseline_hhdens0",
+  "base_hhpovrate0",
+  "prop_head_f_a0",
+  "sexratio0_a",
+  "prop_indianwhite0",
+  "kms_to_road0",
+  "kms_to_town0",
+  "prop_matric_m0",
+  "prop_matric_f0",
+  "d_prop_waterclose",
+  "d_prop_flush")
+dinkelman <- dinkelman[, keep]
+rm(keep)
+
+# Rename "T" to escom so it doesn't clash with "TRUE"
+names(dinkelman)[which(names((dinkelman)) == "T")] <- "escom"
+
+# Rescale certain variables to match magnitudes in paper
+rescale <- c("mean_grad_new", "kms_to_subs0", "baseline_hhdens0",
+             "kms_to_road0", "kms_to_town0")
+dinkelman[,rescale] <- dinkelman[,rescale] / 10
+rm(rescale)
+
+# Create binary version of instrument
+dinkelman$steep <- (dinkelman$mean_grad_new > 1) # use 1 as cutoff ~= median and FAO's def of strongly sloping
+
+# Replace dccode0 (a factor for district) with a group of dummy variables that
+# represent the same information, treating F21 as the "baseline"
+district <- as.factor(dinkelman$dccode0)
+dinkelman$dccode0 <- NULL
+dummies <- model.matrix(~ district)
+dummies <- dummies[, -1]
+dinkelman <- cbind(dinkelman, dummies)
+rm(district, dummies)
+
+devtools::use_data(dinkelman, overwrite = TRUE)
+rm(dinkelman)
+
 
 # ======================================================================
 # Gelbach (2002, AER) - Public Schooling for Young Children
 # Based on data used in Tables 6 and 7
 # ======================================================================
 download.file("http://gelbach.law.upenn.edu/phil/interact.dta",
-              "./data-raw/interact.dta")
-gelbach <- haven::read_dta("./data-raw/interact.dta")
+              "./data/interact.dta")
+gelbach <- haven::read_dta("./data/interact.dta")
 
 # Restrict sample to mothers whose youngest child is 5 years old
 gelbach <- subset(gelbach, youngest == 5)

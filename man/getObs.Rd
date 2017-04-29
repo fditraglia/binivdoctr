@@ -40,4 +40,3 @@ AngristZ <- "vouch0"
 getObs(AngristY, AngristT, AngristZ, AngristControls, angrist)
 
 }
-

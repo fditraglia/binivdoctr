@@ -222,7 +222,8 @@ drawObs <- function(y_name, T_name, z_name, controls = NULL, data,
 draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
                           dTstar_tilde_range, a0bound = NULL, a1bound = NULL,
                           nRF = 500, nIS = 500,
-                          option = NULL){
+                          option = NULL,
+                          evaluateInterior=FALSE,...){
 
   RFdraws <- drawObs(y_name, T_name, z_name, controls, data, nDraws = nRF)
   alpha_bounds <- t(sapply(1:nrow(RFdraws),
@@ -250,7 +251,7 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
     obs <- as.list(RFdraws[i,])
     dTstar_tilde <- runif(nIS, dTstar_tilde_range[1], dTstar_tilde_range[2])
 
-    if(!is.null(option)){
+    if(!is.null(option) & !is.na(option)){
       # Option that constrains a0 and a1 so that pstar equals p
       if(option == "PequalPstar"){
         slope <- with(obs, (1 - p) / p)
@@ -269,7 +270,8 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
           a1 <- runif(nIS, 0, obs$a1upper)
           a0 <- a1
         }
-      }else{
+      }else {
+        #print(option[i])
         stop("Invalid option specified.")
       }
     }else{
@@ -289,7 +291,9 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
     tempSlice$beta <- BBS * (obs$beta_iv - s_ze * obs$s_zT_upper)
     ISdraws[[i]] <- tempSlice
   }
-  return(list(IS = ISdraws, RF = RFdraws))
+  return(list(IS = ISdraws, RF = RFdraws,
+              dTstar_tilde_range = dTstar_tilde_range,
+              evaluateInterior = evaluateInterior))
 }
 
 #' Make draws for dTstar_tilde under the assumption that dz_tilde = 0
@@ -316,7 +320,7 @@ draw_dz_tilde <- function(y_name, T_name, z_name, controls = NULL, data,
 #'                                controls = afghanControls, data = afghan)
 draw_dTstar_tilde_valid <- function(y_name, T_name, z_name, controls = NULL,
                                     data, a0bound = NULL, a1bound = NULL,
-                                    nRF = 500, nIS = 500){
+                                    nRF = 500, nIS = 500,...){
 
   RFdraws <- drawObs(y_name , T_name, z_name, controls, data , nDraws  = nRF)
   alpha_bounds <- t(sapply(1:nrow(RFdraws), function(i) get_alpha_bounds(RFdraws[i,])))

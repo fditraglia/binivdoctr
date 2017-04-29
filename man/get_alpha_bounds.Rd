@@ -26,4 +26,3 @@ afghanZ <- "buildschool"
 afghanObs <- getObs(afghanY, afghanT, afghanZ, afghanControls, afghan)
 get_alpha_bounds(afghanObs)
 }
-

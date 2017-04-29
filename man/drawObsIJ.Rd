@@ -25,4 +25,3 @@ Matrix of reduced form draws
 \description{
 Draw reduced form parameters from Ishwaran & James DPM
 }
-

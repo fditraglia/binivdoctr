@@ -14,4 +14,3 @@ plot_fixed_a1(obs, a1 = 0, dTstar_lim, n_grid = 50, theta = 0, phi = 15,
 \description{
 Plot fixing a1
 }
-
